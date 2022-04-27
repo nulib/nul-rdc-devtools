@@ -5,6 +5,3 @@ source ./asdf-helpers.sh
 if [[ -e ~/.aws/credentials ]]; then
   rm -f ~/.aws/credentials
 fi
-if [[ -d ~/environment/miscellany ]]; then 
-  source ~/environment/miscellany/secrets/dev_environment.sh;
-fi
