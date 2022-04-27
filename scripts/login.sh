@@ -1,5 +1,6 @@
-source ./environment.sh
-source ./asdf-helpers.sh
+dir=$(dirname $0)
+source $dir/environment.sh
+source $dir/asdf-helpers.sh
 
 . $HOME/.asdf/asdf.sh
 if [[ -e ~/.aws/credentials ]]; then
