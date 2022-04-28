@@ -1,0 +1,9 @@
+prefix=$DEV_PREFIX-$1
+extra_args=" --dryrun"
+if [[ "$2" == "-y" ]]; then
+  extra_args=""
+fi
+
+for bucket in ingest preservation preservation-checks pyramids streaming uploads; do
+  aws s3 rm --recursive s3://${prefix}-${bucket}/ $extra_args
+done
