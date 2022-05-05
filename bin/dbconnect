@@ -1,9 +1,9 @@
 #!/bin/bash
 
-secrets=$(aws secretsmanager get-secret-value --secret-id dev-environment/db | jq '.SecretString | fromjson')
+secrets=$(aws secretsmanager get-secret-value --secret-id dev-environment/config/meadow --query SecretString --output text)
 
 get_parameter() {
-  jq -r ".$1" <<< $secrets
+  jq -r ".db.$1" <<< $secrets
 }
 
 DEV_ENV=${DEV_ENV:-dev}
