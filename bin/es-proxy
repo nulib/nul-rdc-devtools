@@ -1,28 +1,30 @@
 #!/bin/bash
 
-mkdir -p $HOME/.run
+instance() {
+  docker ps -qf "name=es-proxy"
+}
 
 start() {
-  if [[ -e $HOME/.run/es-proxy.cid ]]; then
+  cid=$(instance)
+  if [[ -n "$cid" ]]; then
     echo "es-proxy already running"
   else
-    cid=$(docker run --rm -d -v $(dirname $0)/../helpers/es-proxy.conf:/etc/nginx/conf.d/es-proxy.conf:ro -p 9200:9200 nginx)
+    output=$(docker run --name es-proxy --rm -d -v $(dirname $0)/../helpers/es-proxy.conf:/etc/nginx/conf.d/es-proxy.conf:ro -p 9200:9200 nginx)
     if [[ $? == 0 ]]; then
-      echo $cid > $HOME/.run/es-proxy.cid
       sg open all 9200
       echo "Proxying http://${DEV_PREFIX}.dev.rdc.library.northwestern.edu:9200/ to OpenSearch"
       echo "OpenSearch Dashboards available on http://${DEV_PREFIX}.dev.rdc.library.northwestern.edu:9200/_dashboards"
     else
-      echo $cid
+      echo $output
     fi
   fi
 }
 
 stop() {
-  if [[ -e $HOME/.run/es-proxy.cid ]]; then
+  cid=$(instance)
+  if [[ -n "$cid" ]]; then
     sg close all 9200
-    docker stop $(cat $HOME/.run/es-proxy.cid)
-    rm $HOME/.run/es-proxy.cid
+    docker stop $cid
   else
     echo "es-proxy not running"
   fi
@@ -34,8 +36,5 @@ case "$1" in
     ;;
   stop)
     stop
-    ;;
-  reset)
-    rm -f $HOME/.run/es-proxy.cid
     ;;
 esac
