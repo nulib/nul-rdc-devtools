@@ -44,12 +44,40 @@ is_vscode_connected() {
     pgrep -u ec2-user -f .vscode-server/bin/ >/dev/null
 }
 
+keepalive_file_exists() {
+    local FILE
+    FILE=/home/ec2-user/.keep-alive
+    if [[ -f "$FILE" ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+prevent_shutddown() {
+    if [[ ! $SHUTDOWN_TIMEOUT =~ ^[0-9]+$ ]]; then
+        echo "stop-if-inactive.sh: No timeout set." >&2
+        return 0
+    elif keepalive_file_exists; then
+        echo "stop-if-inactive.sh: ~/.keep-alive detected." >&2
+        return 0
+    elif is_vscode_connected; then
+        echo "stop-if-inactive.sh: VS Code is connected." >&2
+        return 0
+    elif is_vfs_connected; then
+        echo "stop-if-inactive.sh: Cloud9 VFS is connected." >&2
+        return 0
+    else
+        return 1
+    fi
+}
+
 if is_shutting_down; then
-    if [[ ! $SHUTDOWN_TIMEOUT =~ ^[0-9]+$ ]] || is_vfs_connected || is_vscode_connected; then
+    if prevent_shutddown; then
         sudo shutdown -c
     fi
 else
-    if [[ $SHUTDOWN_TIMEOUT =~ ^[0-9]+$ ]] && ! is_vfs_connected && ! is_vscode_connected; then
+    if ! prevent_shutddown; then
         sudo shutdown -h $SHUTDOWN_TIMEOUT
     fi
 fi
