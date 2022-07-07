@@ -74,10 +74,12 @@ prevent_shutddown() {
 
 if is_shutting_down; then
     if prevent_shutddown; then
+        echo "stop-if-inactive.sh: Canceling shutdown." >&2
         sudo shutdown -c
     fi
 else
     if ! prevent_shutddown; then
+        echo "stop-if-inactive.sh: Scheduling shutdown in $SHUTDOWN_TIMEOUT minutes." >&2
         sudo shutdown -h $SHUTDOWN_TIMEOUT
     fi
 fi
