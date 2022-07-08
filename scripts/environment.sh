@@ -7,4 +7,5 @@ export DEV_PREFIX=$(aws ec2 describe-tags --filters "Name=resource-id,Values=$in
 export ERL_AFLAGS="-kernel shell_history enabled"
 export SECRET_KEY_BASE=$(openssl rand -hex 32)
 export SECRETS_PATH=dev-environment/config
+export SHARED_BUCKET=nul-shared-prod-staging
 export PATH=$HOME/.nul-rdc-devtools/bin:$PATH
