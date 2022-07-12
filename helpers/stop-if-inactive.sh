@@ -43,7 +43,7 @@ is_vfs_connected() {
 is_vscode_connected() {
     # pgrep -u ec2-user -f .vscode-server/bin/ >/dev/null
     VSCODE_PIDS=$(pgrep -u ec2-user -f .vscode-server/bin/ | tr "\n" ',')
-    if [[ -n $VSCODE_PIDS ]] && lsof -p $VSCODE_PIDS | grep '(LISTEN)' >/dev/null; then
+    if [[ -n $VSCODE_PIDS ]] && /usr/sbin/lsof -p $VSCODE_PIDS | grep '(LISTEN)' >/dev/null; then
         return 0
     else
         return 1
