@@ -24,3 +24,5 @@ export SHARED_BUCKET=nul-shared-prod-staging
 export SSL_CERT=$HOME/.dev_cert/dev.rdc.cert.pem
 export SSL_KEY=$HOME/.dev_cert/dev.rdc.key.pem
 export PATH=$HOME/.nul-rdc-devtools/bin:$PATH
+export NEXT_PUBLIC_DCAPI_ENDPOINT=https://dcapi.rdc-staging.library.northwestern.edu/api/v2
+export JWT_TOKEN_SECRET=$SECRET_KEY_BASE
