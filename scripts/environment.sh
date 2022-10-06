@@ -1,10 +1,7 @@
 instance_id=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
 secrets=$(aws secretsmanager get-secret-value --secret-id dev-environment/config/meadow --query SecretString --output text)
 
-openssl x509 -in $HOME/.dev_cert/dev.rdc.cert.pem -noout -checkend 0
-cert_expiring=$?
-
-if [[ ! -e $HOME/.dev_cert/dev.rdc.cert.pem || $cert_expiring == 1 ]]; then
+if [[ ! -e $HOME/.dev_cert/dev.rdc.cert.pem ]] || ! openssl x509 -in $HOME/.dev_cert/dev.rdc.cert.pem -noout -checkend 0 >/dev/null; then
   ssl_secret=$(aws secretsmanager get-secret-value --secret-id dev-environment/config/wildcard_ssl --query SecretString --output text)
   mkdir -p $HOME/.dev_cert
   jq -r .certificate <<< $ssl_secret > $HOME/.dev_cert/dev.rdc.cert.pem
