@@ -1,0 +1,20 @@
+#!/bin/bash -e
+
+TAG_DATA=$(aws ec2 describe-tags --filters Name=resource-id,Values=$INSTANCE_ID)
+OWNER=$(jq -r '.Tags[] | select(.Key == "Owner") | .Value' <<< $TAG_DATA)
+COMMON_CONFIG=$(aws secretsmanager get-secret-value --secret-id "dev-environment/terraform/common" --query "SecretString" --output text)
+SHARED_BUCKET=$(jq -r .shared_bucket_arn <<< $COMMON_CONFIG | rev | cut -d ':' -f1 | rev)
+
+case $1 in
+  backup)
+    tar -C $HOME cjf /tmp/${OWNER}.tar.bz2 --exclude-ignore=$HOME/.nul-rdc-devtools/helpers/homeignore .
+    aws s3 cp /tmp/${OWNER}.tar.bz2 s3://$SHARED_BUCKET/homes/${OWNER}.tar.bz2
+    rm /tmp/${OWNER}.tar.bz2
+    ;;
+  restore)
+    aws s3 cp s3://$SHARED_BUCKET/homes/${OWNER}.tar.bz2 | tar -C $HOME xj
+    ;;
+  *)
+    echo "USAGE: $0 <backup|restore>"
+    ;;
+esac
