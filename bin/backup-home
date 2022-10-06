@@ -12,7 +12,11 @@ case $1 in
     rm /tmp/${OWNER}.tar.bz2
     ;;
   restore)
-    aws s3 cp s3://$SHARED_BUCKET/homes/${OWNER}.tar.bz2 | tar -C $HOME xj
+    if aws s3 ls s3://$SHARED_BUCKET/homes/${OWNER}.tar.bz2; then
+      aws s3 cp s3://$SHARED_BUCKET/homes/${OWNER}.tar.bz2 - | tar -C $HOME xj
+    else
+      echo "s3://$SHARED_BUCKET/homes/${OWNER}.tar.bz2 not found. Skipping restore."
+    fi  
     ;;
   *)
     echo "USAGE: $0 <backup|restore>"
