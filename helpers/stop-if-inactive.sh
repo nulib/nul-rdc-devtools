@@ -3,7 +3,7 @@
 
 #!/bin/bash
 set -euo pipefail
-CONFIG=$(cat /home/ec2-user/.c9/autoshutdown-configuration)
+CONFIG=$(cat $(dirname $0)/autoshutdown-configuration)
 SHUTDOWN_TIMEOUT=${CONFIG#*=}
 if ! [[ $SHUTDOWN_TIMEOUT =~ ^[0-9]*$ ]]; then
     echo "shutdown timeout is invalid"
