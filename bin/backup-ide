@@ -1,0 +1,76 @@
+#!/bin/bash -e
+if [[ -n $DEBUG ]]; then set -x; fi
+
+vscode-backup() {
+  commit=$(ls $HOME/.vscode-server/bin/ | head -1)
+  if [[ -n $commit && -e $HOME/.vscode-server/bin/${commit}/bin/code-server ]]; then
+    echo "Backing up Visual Studio Code extensions & settings"
+    mkdir -p $HOME/.vscode-restore
+    echo $commit > $HOME/.vscode-restore/commit
+    $HOME/.vscode-server/bin/${commit}/bin/code-server --list-extensions > $HOME/.vscode-restore/extensions
+    if [[ -e $HOME/.vscode-server/data/Machine/settings.json ]]; then
+      cp $HOME/.vscode-server/data/Machine/settings.json $HOME/.vscode-restore/
+    fi
+  fi
+}
+
+vscode-restore() {
+  if [[ -e $HOME/.vscode-restore/commit ]]; then
+    echo "Restoring Visual Studio Code extensions & settings"
+    commit=$(cat $HOME/.vscode-restore/commit)
+    mkdir -p $HOME/.vscode-server/bin/${commit}
+    curl -Ls https://update.code.visualstudio.com/commit:${commit}/server-linux-x64/stable \
+      | tar xz --strip-components=1 -C $HOME/.vscode-server/bin/${commit}
+
+    if [[ -e $HOME/.vscode-restore/extensions ]]; then
+      install_params=""
+      for ext in $(cat $HOME/.vscode-restore/extensions); do
+        install_params="$install_params --install-extension $ext"
+      done
+      $HOME/.vscode-server/bin/${commit}/bin/code-server $install_params
+    fi
+
+    if [[ -e $HOME/.vscode-restore/settings.json ]]; then
+      mkdir -p $HOME/.vscode-server/data/Machine
+      cp  $HOME/.vscode-restore/settings.json $HOME/.vscode-server/data/Machine/settings.json
+    fi
+  fi
+}
+
+COMMAND=$1
+INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
+TAG_DATA=$(aws ec2 describe-tags --filters Name=resource-id,Values=$INSTANCE_ID)
+OWNER=$(jq -r '.Tags[] | select(.Key == "Owner") | .Value' <<< $TAG_DATA)
+COMMON_CONFIG=$(aws secretsmanager get-secret-value --secret-id "dev-environment/terraform/common" --query "SecretString" --output text)
+SHARED_BUCKET=$(jq -r .shared_bucket_arn <<< $COMMON_CONFIG | rev | cut -d ':' -f1 | rev)
+FILE=${2:-${OWNER}}.tar.bz2
+
+case $COMMAND in
+  backup)
+    vscode-backup
+    echo "Creating tarball of $HOME in /tmp/$FILE..."
+    set +e
+    tar cjf /tmp/$FILE -C $HOME --exclude-from=$HOME/.nul-rdc-devtools/helpers/backup-ignore .
+    exitcode=$?
+    if [ $exitcode -gt 1 ]; then exit $exitcode; fi
+    set -e
+    aws s3 cp /tmp/$FILE s3://$SHARED_BUCKET/homes/$FILE
+    rm /tmp/$FILE
+    ;;
+  restore)
+    if aws s3 ls s3://$SHARED_BUCKET/homes/$FILE > /dev/null; then
+      echo "Retrieving and extracting $FILE to $HOME..."
+      aws s3 cp s3://$SHARED_BUCKET/homes/$FILE - | tar xj -C $HOME
+      vscode-restore
+    else
+      echo "s3://$SHARED_BUCKET/homes/$FILE not found. Skipping restore."
+    fi
+    ;;
+  delete)
+    aws s3 rm s3://$SHARED_BUCKET/homes/$FILE
+    ;;
+  *)
+    echo "Unknown command: $1"
+    echo "USAGE: $0 <backup|restore> [basename]"
+    ;;
+esac
