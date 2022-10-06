@@ -2,7 +2,7 @@ if [[ -e ~/.aws/credentials ]] && grep 'if this file is modified' ~/.aws/credent
   echo -n "" > ~/.aws/credentials
 fi
 
-dir=$(dirname $0)
+dir=$(dirname ${BASH_SOURCE[0]})
 source $dir/environment.sh
 source $dir/asdf-helpers.sh
 source $dir/terraform-helpers.sh
