@@ -8,6 +8,7 @@
 .cache
 .c9
 .hex
+.keep-alive
 .npm
 .nul-rdc-devtools
 .nvm

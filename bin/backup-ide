@@ -2,7 +2,7 @@
 if [[ -n $DEBUG ]]; then set -x; fi
 
 asdf-backup() {
-  echo "Saving list of asdf plugins and versions"
+  echo "Saving list of asdf plugins and versions" >&2
   installed="{}"
   for p in $(asdf plugin list); do
     installed=$(jq --arg plugin $p '. + { ($plugin): [] }' <<< $installed)
@@ -18,7 +18,7 @@ asdf-restore() {
   if [[ -e $HOME/.backup-ide/asdf/installed.json ]]; then
     set +e
     installed=$(cat $HOME/.backup-ide/asdf/installed.json)
-    echo "Reinstalling asdf plugins and versions"
+    echo "Reinstalling asdf plugins and versions" >&2
     for p in $(jq -r 'keys[]' <<< $installed); do
       asdf plugin add $p
       for v in $(jq -r --arg plugin $p '.[$plugin][]' <<< $installed); do
@@ -32,7 +32,7 @@ asdf-restore() {
 vscode-backup() {
   commit=$(ls $HOME/.vscode-server/bin/ | head -1)
   if [[ -n $commit && -e $HOME/.vscode-server/bin/${commit}/bin/code-server ]]; then
-    echo "Backing up Visual Studio Code extensions & settings"
+    echo "Backing up Visual Studio Code extensions & settings" >&2
     mkdir -p $HOME/.backup-ide/vscode
     echo $commit > $HOME/.backup-ide/vscode/commit
     $HOME/.vscode-server/bin/${commit}/bin/code-server --list-extensions > $HOME/.backup-ide/vscode/extensions
@@ -44,7 +44,7 @@ vscode-backup() {
 
 vscode-restore() {
   if [[ -e $HOME/.backup-ide/vscode/commit ]]; then
-    echo "Restoring Visual Studio Code extensions & settings"
+    echo "Restoring Visual Studio Code extensions & settings" >&2
     commit=$(cat $HOME/.backup-ide/vscode/commit)
     mkdir -p $HOME/.vscode-server/bin/${commit}
     curl -Ls https://update.code.visualstudio.com/commit:${commit}/server-linux-x64/stable \
@@ -81,7 +81,7 @@ shared-bucket() {
 home-backup() {
   SHARED_BUCKET=$(shared-bucket)
   FILE=$(backup-filename $2)
-  echo "Creating tarball of $HOME in /tmp/$FILE..."
+  echo "Creating tarball of $HOME in /tmp/$FILE..." >&2
   set +e
   tar cjf /tmp/$FILE -C $HOME --exclude-from=$HOME/.nul-rdc-devtools/helpers/backup-ignore .
   exitcode=$?
@@ -95,15 +95,45 @@ home-restore() {
   SHARED_BUCKET=$(shared-bucket)
   FILE=$(backup-filename $2)
   if aws s3 ls s3://$SHARED_BUCKET/homes/$FILE > /dev/null; then
-    echo "Retrieving and extracting $FILE to $HOME..."
+    echo "Retrieving and extracting $FILE to $HOME..." >&2
     aws s3 cp s3://$SHARED_BUCKET/homes/$FILE - | tar xj -C $HOME
   else
-    echo "s3://$SHARED_BUCKET/homes/$FILE not found. Skipping restore."
+    echo "s3://$SHARED_BUCKET/homes/$FILE not found. Skipping restore." >&2
   fi
 }
 
+display-help() {
+  cat <<__EOC__ >&2
+This script will back up your home directory to a shared S3 bucket so it can be
+restored later during an environment refresh or replacement. In order to minimize
+the time and storage required, things like project dependencies and build 
+artifacts (e.g., \`deps\`, \`node_modules\`, \`_build\`) are excluded from the backup,
+as well as cache files.
+
+Tools installed under ASDF are not backed up, but a record of what plugins and 
+versions were installed at the time of the backup is included, and the restore
+operation will reinstall them during the restore. The same is true of Visual Code
+server, plugins, and settings.
+
+Commands:
+
+    backup [BASENAME]     Initiate a backup, overwriting any existing backup
+                          already in place.
+
+    restore [BASENAME]    Initiate a restore, overwriting the existing home
+                          directory.
+  
+    delete [BASENAME]     Delete an existing backup.
+
+    help                  Display this help message.
+
+All operations use s3://$(shared-bucket)/homes/BASENAME.tar.gz as the backup
+location. If BASENAME is not provided, the EC2 instance's Owner tag will be used.
+__EOC__
+  echo
+}
+
 COMMAND=$1
-FILE=$2
 
 case $COMMAND in
   backup)
@@ -117,10 +147,15 @@ case $COMMAND in
     done
     ;;
   delete)
+    SHARED_BUCKET=$(shared-bucket)
+    FILE=$(backup-filename $2)
     aws s3 rm s3://$SHARED_BUCKET/homes/$FILE
     ;;
+  help)
+    display-help
+    ;;
   *)
-    echo "Unknown command: $1"
-    echo "USAGE: $0 <backup|restore> [basename]"
+    echo "Unknown command: $1" >&2
+    echo "USAGE: $0 <backup|restore|delete|help> [basename]" >&2
     ;;
 esac
