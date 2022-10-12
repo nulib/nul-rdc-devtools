@@ -41,9 +41,13 @@ is_vfs_connected() {
 }
 
 is_vscode_connected() {
-    # pgrep -u ec2-user -f .vscode-server/bin/ >/dev/null
-    VSCODE_PIDS=$(pgrep -u ec2-user -f .vscode-server/bin/ | tr "\n" ',')
-    if [[ -n $VSCODE_PIDS ]] && /usr/sbin/lsof -p $VSCODE_PIDS | grep '(LISTEN)' >/dev/null; then
+    OLD_PATH=$PATH
+    PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
+    PGREP=$(which pgrep)
+    LSOF=$(which lsof)
+    PATH=$OLD_PATH
+    VSCODE_PIDS=$($PGREP -u ec2-user -f .vscode-server/bin/ | tr "\n" ',')
+    if [[ -n $VSCODE_PIDS ]] && $LSOF -p $VSCODE_PIDS 2>/dev/null | grep '(LISTEN)' >/dev/null; then
         return 0
     else
         return 1
@@ -89,3 +93,4 @@ else
         sudo shutdown -h $SHUTDOWN_TIMEOUT
     fi
 fi
+touch $HOME/.last_inactive_check

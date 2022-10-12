@@ -19,9 +19,8 @@ __EOF__
 }
 
 security_group_id() {
-  environment_id=$(aws ec2 describe-instances --filters Name=instance-id,Values=$(curl -s http://169.254.169.254/latest/meta-data/instance-id) --query "Reservations[0].Instances[0].Tags[?Key == 'aws:cloud9:environment'].Value" --output text)
   aws ec2 describe-security-groups \
-    --filters Name=tag:aws:cloud9:environment,Values=$environment_id \
+    --filters Name=tag:Owner,Values=$DEV_PREFIX Name=tag:Project,Values=dev-environment \
     --query 'SecurityGroups[0].GroupId' --output text
 }
 

@@ -1,0 +1,49 @@
+#!/bin/bash
+
+instance() {
+  docker ps -qf "name=https-proxy-$1"
+}
+
+start() {
+  cid=$(instance $@)
+  if [[ -n "$cid" ]]; then
+    echo "https-proxy already running on port $1"
+  else
+    PORT=$1
+    UPSTREAM=$2
+    output=$(docker run --name https-proxy-$PORT --rm -d \
+        -e "UPSTREAM_DOMAIN=172.17.0.1" \
+        -e "UPSTREAM_PORT=$UPSTREAM" \
+        -e "PROXY_DOMAIN=${DEV_PREFIX}.dev.rdc.library.northwestern.edu" \
+        -v $HOME/.dev_cert/dev.rdc.cert.pem:/etc/nginx/certs/cert.pem \
+        -v $HOME/.dev_cert/dev.rdc.key.pem:/etc/nginx/certs/key.pem \
+        -p $PORT:443 outrigger/https-proxy:1.0)
+    if [[ $? == 0 ]]; then
+      sg open all $1
+      echo "Proxying http://${DEV_PREFIX}.dev.rdc.library.northwestern.edu:$1/ to local port $2"
+    else
+      echo $output
+    fi
+  fi
+}
+
+stop() {
+  cid=$(instance)
+  if [[ -n "$cid" ]]; then
+    sg close all $1
+    docker stop $cid
+  else
+    echo "proxy not running"
+  fi
+}
+
+COMMAND=$1
+shift
+case "$COMMAND" in
+  start)
+    start $@
+    ;;
+  stop)
+    stop $@
+    ;;
+esac
