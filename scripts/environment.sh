@@ -8,18 +8,27 @@ if [[ ! -e $HOME/.dev_cert/dev.rdc.cert.pem ]] || ! openssl x509 -in $HOME/.dev_
   jq -r .key <<< $ssl_secret > $HOME/.dev_cert/dev.rdc.key.pem
 fi
 
+if [[ ! -e $HOME/environment/miscellany ]]; then
+  git clone git@github.com:nulib/miscellany.git $HOME/environment/miscellany
+fi
+
+RETURN=$PWD
+cd $HOME/environment/miscellany
+git pull origin >/dev/null 2>&1
+source ./secrets/dev_environment.sh >/dev/null 2>&1
+cd $RETURN
+
 export AWS_DEV_ENVIRONMENT=true
 export AWS_REGION=$(curl -s http://169.254.169.254/latest/dynamic/instance-identity/document | jq -r '.region')
 export DEV_ENV=dev
 export DEV_PREFIX=$(aws ec2 describe-tags --filters "Name=resource-id,Values=$instance_id" "Name=key,Values=Owner" | jq -r '.Tags[].Value')
 export ERL_AFLAGS="-kernel shell_history enabled"
-export NUSSO_API_KEY=$(jq -r .nusso.api_key <<< $secrets)
-export NUSSO_BASE_URL=$(jq -r .nusso.base_url <<< $secrets)
+#export NUSSO_API_KEY=$(jq -r .nusso.api_key <<< $secrets)
+#export NUSSO_BASE_URL=$(jq -r .nusso.base_url <<< $secrets)
 export SECRET_KEY_BASE=$(openssl rand -hex 32)
 export SECRETS_PATH=dev-environment/config
 export SHARED_BUCKET=nul-shared-prod-staging
 export SSL_CERT=$HOME/.dev_cert/dev.rdc.cert.pem
 export SSL_KEY=$HOME/.dev_cert/dev.rdc.key.pem
 export PATH=$HOME/.nul-rdc-devtools/bin:$PATH
-export NEXT_PUBLIC_DCAPI_ENDPOINT=https://dcapi.rdc-staging.library.northwestern.edu/api/v2
 export JWT_TOKEN_SECRET=$SECRET_KEY_BASE
