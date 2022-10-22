@@ -7,8 +7,10 @@
 .aws/adfs_cache
 .cache
 .c9
+.gem
 .hex
 .keep-alive
+.local
 .npm
 .nul-rdc-devtools
 .nvm
@@ -17,7 +19,9 @@
 .zcompdump-*
 environment/**/.aws_sam
 environment/**/.elixir_ls
-environment/**/{_build,build,builds}
+environment/**/_build
+environment/**/build
+environment/**/builds
 environment/**/deps
 environment/**/erl_crash.dump
-environment/**/priv/static/*
+environment/**/priv/static

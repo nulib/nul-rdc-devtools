@@ -78,6 +78,16 @@ shared-bucket() {
     | jq -r .shared_bucket_arn | rev | cut -d ':' -f1 | rev
 }
 
+links-backup() {
+  pushd $HOME
+  find . -type l | xargs tar cjf $HOME/.backup-ide/symlinks.tar.bz2 --exclude-from=$HOME/.nul-rdc-devtools/helpers/backup-ignore
+  popd
+}
+
+links-restore() {
+  tar xjf $HOME/.backup-ide/symlinks.tar.bz2 -C $HOME
+}
+
 home-backup() {
   SHARED_BUCKET=$(shared-bucket)
   FILE=$(backup-filename $2)
@@ -137,12 +147,12 @@ COMMAND=$1
 
 case $COMMAND in
   backup)
-    for component in asdf vscode home; do
+    for component in asdf vscode links home; do
       ${component}-backup $@
     done
     ;;
   restore)
-    for component in home vscode asdf; do
+    for component in home vscode links asdf; do
       ${component}-restore $@
     done
     ;;
