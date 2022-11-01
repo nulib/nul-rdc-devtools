@@ -29,40 +29,61 @@ asdf-restore() {
   fi
 }
 
-vscode-backup() {
-  commit=$(ls $HOME/.vscode-server/bin/ | head -1)
-  if [[ -n $commit && -e $HOME/.vscode-server/bin/${commit}/bin/code-server ]]; then
-    echo "Backing up Visual Studio Code extensions & settings" >&2
-    mkdir -p $HOME/.backup-ide/vscode
-    echo $commit > $HOME/.backup-ide/vscode/commit
-    $HOME/.vscode-server/bin/${commit}/bin/code-server --list-extensions > $HOME/.backup-ide/vscode/extensions
-    if [[ -e $HOME/.vscode-server/data/Machine/settings.json ]]; then
-      cp $HOME/.vscode-server/data/Machine/settings.json $HOME/.backup-ide/vscode/
+vscode-flavor-backup() {
+  codename=${1:-code}
+  commit=$(ls -t $HOME/.vs${codename}-server/bin/ | head -1)
+  if [[ -n $commit && -e $HOME/.vs${codename}-server/bin/${commit}/bin/${codename}-server ]]; then
+    echo "Backing up VS $codename extensions & settings" >&2
+    mkdir -p $HOME/.backup-ide/vs${codename}
+    arch=$($HOME/.vs${codename}-server/bin/${commit}/bin/${codename}-server --version | tail -1)
+    jq --arg commit $commit --arg arch $arch '. += {"commit": $commit, "arch": $arch}' < $HOME/.vs${codename}-server/bin/${commit}/package.json > $HOME/.backup-ide/vs${codename}/version
+    $HOME/.vs${codename}-server/bin/${commit}/bin/${codename}-server --list-extensions > $HOME/.backup-ide/vs${codename}/extensions
+    if [[ -e $HOME/.vs${codename}-server/data/Machine/settings.json ]]; then
+      cp $HOME/.vs${codename}-server/data/Machine/settings.json $HOME/.backup-ide/vs${codename}/
     fi
   fi
 }
 
-vscode-restore() {
-  if [[ -e $HOME/.backup-ide/vscode/commit ]]; then
-    echo "Restoring Visual Studio Code extensions & settings" >&2
-    commit=$(cat $HOME/.backup-ide/vscode/commit)
-    mkdir -p $HOME/.vscode-server/bin/${commit}
-    curl -Ls https://update.code.visualstudio.com/commit:${commit}/server-linux-x64/stable \
-      | tar xz --strip-components=1 -C $HOME/.vscode-server/bin/${commit}
+vscode-flavor-restore() {
+  codename=${1:-code}
+  if [[ -e $HOME/.backup-ide/vs${codename}/version ]]; then
+    echo "Restoring VS $codename extensions & settings" >&2
+    version_info=$(cat $HOME/.backup-ide/vs${codename}/version)
+    commit=$(jq -r '.commit' <<< $version_info)
+    arch=$(jq -r '.arch' <<< $version_info)
+    version=$(jq -r '[.version, .release] | map(select(length > 0)) | join(".")' <<< $version_info)
 
-    if [[ -e $HOME/.backup-ide/vscode/extensions ]]; then
+    mkdir -p $HOME/.vs${codename}-server/bin/${commit}
+    if [[ $codename == "codium" ]]; then
+      DOWNLOAD_URL=https://github.com/VSCodium/vscodium/releases/download/${version}/vscodium-reh-linux-${arch}-${version}.tar.gz
+    else
+      DOWNLOAD_URL=https://update.code.visualstudio.com/commit:${commit}/server-linux-x64/stable
+    fi
+    curl -Ls $DOWNLOAD_URL | tar xz --strip-components=1 -C $HOME/.vs${codename}-server/bin/${commit}
+
+    if [[ -e $HOME/.backup-ide/vs${codename}/extensions ]]; then
       install_params=""
-      for ext in $(cat $HOME/.backup-ide/vscode/extensions); do
+      for ext in $(cat $HOME/.backup-ide/vs${codename}/extensions); do
         install_params="$install_params --install-extension $ext"
       done
-      $HOME/.vscode-server/bin/${commit}/bin/code-server $install_params
+      $HOME/.vs${codename}-server/bin/${commit}/bin/${codename}-server $install_params
     fi
 
-    if [[ -e $HOME/.backup-ide/vscode/settings.json ]]; then
-      mkdir -p $HOME/.vscode-server/data/Machine
-      cp  $HOME/.backup-ide/vscode/settings.json $HOME/.vscode-server/data/Machine/settings.json
+    if [[ -e $HOME/.backup-ide/vs${codename}/settings.json ]]; then
+      mkdir -p $HOME/.vs${codename}-server/data/Machine
+      cp  $HOME/.backup-ide/vs${codename}/settings.json $HOME/.vs${codename}-server/data/Machine/settings.json
     fi
   fi
+}
+
+vscode-backup() {
+  vscode-flavor-backup code
+  vscode-flavor-backup codium
+}
+
+vscode-restore() {
+  vscode-flavor-restore code
+  vscode-flavor-restore codium
 }
 
 backup-filename() {

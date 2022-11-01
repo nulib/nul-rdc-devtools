@@ -16,6 +16,7 @@
 .nvm
 .rvm
 .vscode-server
+.vscodium-server
 .zcompdump-*
 environment/**/.aws_sam
 environment/**/.elixir_ls

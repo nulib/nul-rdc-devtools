@@ -46,7 +46,7 @@ is_vscode_connected() {
     PGREP=$(which pgrep)
     LSOF=$(which lsof)
     PATH=$OLD_PATH
-    VSCODE_PIDS=$($PGREP -u ec2-user -f .vscode-server/bin/ | tr "\n" ',')
+    VSCODE_PIDS=$($PGREP -u ec2-user -f ".vscod(e|ium)-server/bin/" | tr "\n" ',')
     if [[ -n $VSCODE_PIDS ]] && $LSOF -p $VSCODE_PIDS 2>/dev/null | grep '(LISTEN)' >/dev/null; then
         return 0
     else
