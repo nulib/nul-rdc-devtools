@@ -31,15 +31,17 @@ asdf-restore() {
 
 vscode-flavor-backup() {
   codename=${1:-code}
-  commit=$(ls -t $HOME/.vs${codename}-server/bin/ | head -1)
-  if [[ -n $commit && -e $HOME/.vs${codename}-server/bin/${commit}/bin/${codename}-server ]]; then
-    echo "Backing up VS $codename extensions & settings" >&2
-    mkdir -p $HOME/.backup-ide/vs${codename}
-    arch=$($HOME/.vs${codename}-server/bin/${commit}/bin/${codename}-server --version | tail -1)
-    jq --arg commit $commit --arg arch $arch '. += {"commit": $commit, "arch": $arch}' < $HOME/.vs${codename}-server/bin/${commit}/package.json > $HOME/.backup-ide/vs${codename}/version
-    $HOME/.vs${codename}-server/bin/${commit}/bin/${codename}-server --list-extensions > $HOME/.backup-ide/vs${codename}/extensions
-    if [[ -e $HOME/.vs${codename}-server/data/Machine/settings.json ]]; then
-      cp $HOME/.vs${codename}-server/data/Machine/settings.json $HOME/.backup-ide/vs${codename}/
+  if [[ -e $HOME/.vs${codename}-server ]]; then
+    commit=$(ls -t $HOME/.vs${codename}-server/bin/ 2>/dev/null | head -1)
+    if [[ -n $commit && -e $HOME/.vs${codename}-server/bin/${commit}/bin/${codename}-server ]]; then
+      echo "Backing up VS $codename extensions & settings" >&2
+      mkdir -p $HOME/.backup-ide/vs${codename}
+      arch=$($HOME/.vs${codename}-server/bin/${commit}/bin/${codename}-server --version | tail -1)
+      jq --arg commit $commit --arg arch $arch '. += {"commit": $commit, "arch": $arch}' < $HOME/.vs${codename}-server/bin/${commit}/package.json > $HOME/.backup-ide/vs${codename}/version
+      $HOME/.vs${codename}-server/bin/${commit}/bin/${codename}-server --list-extensions > $HOME/.backup-ide/vs${codename}/extensions
+      if [[ -e $HOME/.vs${codename}-server/data/Machine/settings.json ]]; then
+        cp $HOME/.vs${codename}-server/data/Machine/settings.json $HOME/.backup-ide/vs${codename}/
+      fi
     fi
   fi
 }
