@@ -37,6 +37,11 @@ stop() {
   fi
 }
 
+usage() {
+  echo "Usage: $(basename $0) <start|stop> HTTPS_PORT [HTTP_PORT]"
+  echo "Starts or stops an HTTPS proxy on HTTPS_PORT serving content from HTTP_PORT"
+}
+
 COMMAND=$1
 shift
 case "$COMMAND" in
@@ -45,5 +50,8 @@ case "$COMMAND" in
     ;;
   stop)
     stop $@
+    ;;
+  *)
+    usage
     ;;
 esac
