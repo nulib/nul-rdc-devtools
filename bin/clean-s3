@@ -1,9 +1,45 @@
-prefix=$DEV_PREFIX-$1
 extra_args=" --dryrun"
-if [[ "$2" == "-y" ]]; then
-  extra_args=""
-fi
+app="meadow"
 
-for bucket in ingest preservation preservation-checks pyramids streaming uploads; do
-  aws s3 rm --recursive s3://${prefix}-${bucket}/ $extra_args
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -a|--app)
+      app="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    -y|--yes)
+      extra_args=""
+      shift # past argument
+      ;;
+    -*|--*)
+      echo "Unknown option $1"
+      exit 1
+      ;;
+    *)
+      POSITIONAL_ARGS+=("$1") # save positional arg
+      shift # past argument
+      ;;
+  esac
+done
+
+case $app in
+  avr)
+    bucket_pattern="dev-environment-shared-%s-avr-%s"
+    buckets=(derivatives masterfiles)
+    ;;
+  meadow)
+    bucket_pattern="$DEV_PREFIX-%s-%s"
+    buckets=(ingest preservation preservation-checks pyramids streaming uploads)
+    ;;
+  *)
+    echo "Unknown application: $app"
+    exit 1
+esac
+
+for env in ${POSITIONAL_ARGS[@]}; do
+  for bucket in ${buckets[@]}; do
+    bucket_name=$(printf $bucket_pattern $env $bucket)
+    aws s3 rm --recursive s3://${bucket_name}/ $extra_args
+  done
 done

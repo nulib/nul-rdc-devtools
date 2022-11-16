@@ -8,3 +8,4 @@ source $dir/asdf-helpers.sh
 source $dir/terraform-helpers.sh
 
 . $HOME/.asdf/asdf.sh
+eval "$(direnv hook $(basename $SHELL))"

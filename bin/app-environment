@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+
+config=$(aws secretsmanager get-secret-value --secret-id "dev-environment/config/meadow" --query "SecretString" --output text)
+
+get-secret-value() {
+  jq -r ".$1" <<< $config
+}
+
+get-ssm-param() {
+  aws ssm get-parameter --name /$1/Settings/$2 --with-decryption | jq -r '.Parameter.Value | gsub("\\n"; "\\\\n")'
+}
+
+avr() {
+  cat <<__EOC__
+export DB_HOST=$(get-secret-value db.host)
+export DB_PORT=$(get-secret-value db.port)
+export DB_PASSWORD=$(get-secret-value db.password)
+export DB_USER=$(get-secret-value db.user)
+export REDIS_HOST=samvera-stack.internal.dev.rdc.library.northwestern.edu
+export REDIS_PORT=6379
+export SETTINGS__ACTIVE_JOB__QUEUE_ADAPTER=sidekiq
+export SETTINGS__BIB_RETRIEVER__ATTRIBUTE=12
+export SETTINGS__BIB_RETRIEVER__DATABASE=01NWU_INST
+export SETTINGS__BIB_RETRIEVER__HOST=na02.alma.exlibrisgroup.com
+export SETTINGS__BIB_RETRIEVER__PORT=1921
+export SETTINGS__BIB_RETRIEVER__PROTOCOL=z39.50
+export SETTINGS__BIB_RETRIEVER__RETRIEVER_CLASS_REQUIRE='avalon/bib_retriever/zoom'
+export SETTINGS__BIB_RETRIEVER__RETRIEVER_CLASS='Avalon::BibRetriever::Zoom'
+export SETTINGS__CONTROLLED_VOCABULARY__PATH=config/nu_vocab.yml
+export SETTINGS__DOMAIN__HOST=${DEV_PREFIX}.dev.rdc.library.northwestern.edu
+export SETTINGS__DOMAIN__PORT=3001
+export SETTINGS__DOMAIN__PROTOCOL=https
+export SETTINGS__DROPBOX__PATH=s3://dev-environment-shared-dev-avr-masterfiles/dropbox/
+export SETTINGS__DROPBOX__UPLOAD_URI=s3://dev-environment-shared-dev-avr-masterfiles/dropbox/
+export SETTINGS__ENCODING__DERIVATIVE_BUCKET=dev-environment-shared-dev-avr-derivatives
+export SETTINGS__ENCODING__MASTERFILE_BUCKET=dev-environment-shared-dev-avr-masterfiles
+export SETTINGS__FEDORA__URL=http://samvera-stack.internal.dev.rdc.library.northwestern.edu:8080/rest/
+export SETTINGS__FEDORA__BASE_PATH="/avr-<%= Rails.env %>"
+export SETTINGS__FFMPEG__PATH=/usr/bin/ffmpeg
+export SETTINGS__MASTER_FILE_MANAGEMENT__STRATEGY=DELETE
+export SETTINGS__MEDIAINFO__PATH=/usr/bin/mediainfo
+export SETTINGS__REDIS__HOST=samvera-stack.internal.dev.rdc.library.northwestern.edu
+export SETTINGS__REDIS__PORT=6379
+export SETTINGS__SOLR_URL="http://samvera-stack.internal.dev.rdc.library.northwestern.edu:8983/solr/avr-<%= Rails.env %>"
+export SETTINGS__STREAMING__SERVER=s3
+export SETTINGS__STREAMING__SIGNING_KEY_ID="$(get-ssm-param avr streaming/signing_key_id)"
+export SETTINGS__STREAMING__SIGNING_KEY="$(get-ssm-param avr streaming/signing_key)"
+export SETTINGS__ZOOKEEPER__CONNECTION_STR=samvera-stack.internal.dev.rdc.library.northwestern.edu:9983/configs
+__EOC__
+}
+
+write-environment() {
+  $1 > .envrc
+  direnv allow
+}
+
+case $1 in
+  avr)
+    echo "Configuring current environment for AVRs..." >&2
+    write-environment avr  
+    ;;
+esac
