@@ -6,13 +6,13 @@ usage() {
 Usage:
 
 Open ports/ranges to an address or range:
-  $0 open <CIDR|all> PORT[-PORT] PORT[-PORT] ...
+  $(basename $0) open <CIDR|all> PORT[-PORT] PORT[-PORT] ...
 Close ports/ranges to an address or range:
-  $0 close <CIDR|all> PORT[-PORT] PORT[-PORT] ...
+  $(basename $0) close <CIDR|all> PORT[-PORT] PORT[-PORT] ...
 Close all open ports:
-  $0 close all
+  $(basename $0) close all
 Display all open ports:
-  $0 show
+  $(basename $0) show
 
 __EOF__
   exit 1
