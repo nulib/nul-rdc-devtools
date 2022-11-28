@@ -10,6 +10,8 @@ get-ssm-param() {
   aws ssm get-parameter --name /$1/Settings/$2 --with-decryption | jq -r '.Parameter.Value | gsub("\\n"; "\\\\n")'
 }
 
+AWS_ACCOUNT=$(aws sts get-caller-identity | jq -r .Account)
+
 avr() {
   cat <<__EOC__
 export DB_HOST=$(get-secret-value db.host)
@@ -32,13 +34,18 @@ export SETTINGS__DOMAIN__PORT=3001
 export SETTINGS__DOMAIN__PROTOCOL=https
 export SETTINGS__DROPBOX__PATH=s3://dev-environment-shared-dev-avr-masterfiles/dropbox/
 export SETTINGS__DROPBOX__UPLOAD_URI=s3://dev-environment-shared-dev-avr-masterfiles/dropbox/
+export SETTINGS__ENCODING__ENGINE_ADAPTER=media_convert
+export SETTINGS__ENCODING__AIFF_LAMBDA=arn:aws:lambda:${AWS_REGION}:${AWS_ACCOUNT}:function:stack-avr-aiff-to-wav
 export SETTINGS__ENCODING__DERIVATIVE_BUCKET=dev-environment-shared-dev-avr-derivatives
 export SETTINGS__ENCODING__MASTERFILE_BUCKET=dev-environment-shared-dev-avr-masterfiles
+export SETTINGS__ENCODING__MANAGE_DERIVATIVES=false
+export SETTINGS__ENCODING__MEDIA_CONVERT__QUEUE=dev-environment
+export SETTINGS__ENCODING__MEDIA_CONVERT__ROLE=arn:aws:iam:${AWS_REGION}:${AWS_ACCOUNT}:role/dev-environment-transcode-role
 export SETTINGS__FEDORA__URL=http://samvera-stack.internal.dev.rdc.library.northwestern.edu:8080/rest/
 export SETTINGS__FEDORA__BASE_PATH="/avr-<%= Rails.env %>"
 export SETTINGS__FFMPEG__PATH=/usr/bin/ffmpeg
 export SETTINGS__MASTER_FILE_MANAGEMENT__STRATEGY=DELETE
-export SETTINGS__MEDIAINFO__PATH=/usr/bin/mediainfo
+export SETTINGS__MEDIAINFO__PATH="/usr/bin/mediainfo --urlencode"
 export SETTINGS__REDIS__HOST=samvera-stack.internal.dev.rdc.library.northwestern.edu
 export SETTINGS__REDIS__PORT=6379
 export SETTINGS__SOLR_URL="http://samvera-stack.internal.dev.rdc.library.northwestern.edu:8983/solr/avr-<%= Rails.env %>"
