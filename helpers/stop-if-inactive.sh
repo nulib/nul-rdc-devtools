@@ -36,9 +36,6 @@ is_shutting_down_al2() {
         return 1
     fi
 }
-is_vfs_connected() {
-    pgrep -f vfs-worker >/dev/null
-}
 
 is_vscode_connected() {
     OLD_PATH=$PATH
@@ -48,6 +45,16 @@ is_vscode_connected() {
     PATH=$OLD_PATH
     VSCODE_PIDS=$($PGREP -u ec2-user -f ".vscod(e|ium)-server/bin/" | tr "\n" ',')
     if [[ -n $VSCODE_PIDS ]] && $LSOF -p $VSCODE_PIDS 2>/dev/null | grep '(LISTEN)' >/dev/null; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+is_ssm_session_active() {
+    instance_id=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
+    session_count=$(aws ssm describe-sessions --state Active --filter key=Target,value=$instance_id | jq '.Sessions | length')
+    if [[ $session_count -gt 0 ]]; then
         return 0
     else
         return 1
@@ -71,11 +78,8 @@ prevent_shutddown() {
     elif keepalive_file_exists; then
         echo "stop-if-inactive.sh: ~/.keep-alive detected." >&2
         return 0
-    elif is_vscode_connected; then
+    elif is_vscode_connected && is_ssm_session_active; then
         echo "stop-if-inactive.sh: VS Code is connected." >&2
-        return 0
-    elif is_vfs_connected; then
-        echo "stop-if-inactive.sh: Cloud9 VFS is connected." >&2
         return 0
     else
         return 1
