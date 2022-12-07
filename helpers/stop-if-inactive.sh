@@ -53,7 +53,7 @@ is_vscode_connected() {
 
 is_ssm_session_active() {
     instance_id=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
-    session_count=$(aws ssm describe-sessions --state Active --filter key=Target,value=$instance_id | jq '.Sessions | length')
+    session_count=$(/usr/local/bin/aws ssm describe-sessions --state Active --filter key=Target,value=$instance_id | jq '.Sessions | length')
     if [[ $session_count -gt 0 ]]; then
         return 0
     else
