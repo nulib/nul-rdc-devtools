@@ -4,6 +4,72 @@ instance() {
   docker ps -qf "name=https-proxy-$1"
 }
 
+create-conf() {
+  LOCAL_PORT=$1
+  UPSTREAM_DOMAIN=$2
+  UPSTREAM_PORT=$3
+
+  cat > /tmp/https-proxy-${LOCAL_PORT}.conf <<__END__
+server {
+    listen 443 ssl;
+
+    # The max body size for proxied POST and PUT requests.
+    # This is most commonly a problem for file uploads.
+    client_max_body_size 20M;
+
+    # Configure SSL Certification Location
+    ssl_certificate     /etc/nginx/certs/cert.pem;
+    ssl_certificate_key /etc/nginx/certs/key.pem;
+
+    # Activate SSL & Cipher algorithms.
+    ssl_session_cache  builtin:1000  shared:SSL:10m;
+    ssl_protocols  TLSv1 TLSv1.1 TLSv1.2;
+    ssl_ciphers HIGH:!aNULL:!eNULL:!EXPORT:!CAMELLIA:!DES:!MD5:!PSK:!RC4;
+    ssl_prefer_server_ciphers on;
+
+    # Configure gzip compression for responses.
+    gzip on;
+    gzip_buffers 16 8k;
+    gzip_comp_level 6;
+    gzip_min_length 1000;
+    gzip_proxied any;
+    gzip_types
+      text/css text/javascript text/plain text/xml
+      application/javascript application/json application/hal+json
+      application/x-javascript
+      application/xml application/xml+rss
+      ;
+    gzip_vary on;
+    gzip_disable "MSIE [1-6]\.(?!.*SV1)";
+
+    access_log /dev/stdout;
+    error_log /dev/stdout;
+
+    location / {
+      root /var/www/html/public;
+      # The proxy will check from the root for files to meet a given
+      # request before proxying along to the node service.
+      try_files \$uri @service;
+    }
+
+    location @service {
+        proxy_set_header        Host              ${UPSTREAM_DOMAIN};
+        proxy_set_header        X-Real-IP         \$remote_addr;
+        proxy_set_header        X-Forwarded-For   \$proxy_add_x_forwarded_for;
+        proxy_set_header        X-Forwarded-Proto \$scheme;
+        proxy_set_header        X-Forwarded-Host  ${UPSTREAM_DOMAIN};
+        proxy_set_header        X-Forwarded-Port  ${LOCAL_PORT};
+
+        proxy_pass http://172.17.0.1:${UPSTREAM_PORT};
+        sub_filter_once off;
+        sub_filter_types application/json application/xml;
+        sub_filter "http://172.17.0.1:${UPSTREAM_PORT}" "https://${UPSTREAM_DOMAIN}:${LOCAL_PORT}";
+        sub_filter "http://${UPSTREAM_DOMAIN}:${UPSTREAM_PORT}" "https://${UPSTREAM_DOMAIN}:${LOCAL_PORT}";
+    }
+}
+__END__
+}
+
 start() {
   cid=$(instance $@)
   if [[ -n "$cid" ]]; then
@@ -17,13 +83,12 @@ start() {
       return 1
     fi
 
-    output=$(docker run --name https-proxy-$PORT --rm -d \
-        -e "UPSTREAM_DOMAIN=172.17.0.1" \
-        -e "UPSTREAM_PORT=$UPSTREAM" \
-        -e "PROXY_DOMAIN=${DEV_PREFIX}.dev.rdc.library.northwestern.edu" \
-        -v $HOME/.dev_cert/dev.rdc.cert.pem:/etc/nginx/certs/cert.pem \
-        -v $HOME/.dev_cert/dev.rdc.key.pem:/etc/nginx/certs/key.pem \
-        -p $PORT:443 outrigger/https-proxy:1.0)
+    create-conf $PORT ${DEV_PREFIX}.dev.rdc.library.northwestern.edu $UPSTREAM
+    output=$(docker run --name https-proxy-$PORT -d \
+      -v /tmp/https-proxy-${PORT}.conf:/etc/nginx/conf.d/https-proxy-${PORT}.conf:ro \
+      -v $HOME/.dev_cert/dev.rdc.cert.pem:/etc/nginx/certs/cert.pem \
+      -v $HOME/.dev_cert/dev.rdc.key.pem:/etc/nginx/certs/key.pem \
+      -p ${PORT}:443 nginx)
     if [[ $? == 0 ]]; then
       sg open all $1
       echo "Proxying http://${DEV_PREFIX}.dev.rdc.library.northwestern.edu:$1/ to local port $2"
@@ -39,10 +104,12 @@ stop() {
     return 1
   fi
 
-  cid=$(instance)
+  cid=$(instance $1)
   if [[ -n "$cid" ]]; then
     sg close all $1
-    docker stop $cid
+    docker container stop $cid > /dev/null
+    docker container rm $cid > /dev/null
+    rm /tmp/https-proxy-$1.conf
   else
     echo "proxy not running"
   fi
