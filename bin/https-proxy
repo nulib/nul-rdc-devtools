@@ -84,7 +84,7 @@ start() {
     fi
 
     create-conf $PORT ${DEV_PREFIX}.dev.rdc.library.northwestern.edu $UPSTREAM
-    output=$(docker run --name https-proxy-$PORT -d \
+    output=$(docker run --name https-proxy-$PORT --rm -d \
       -v /tmp/https-proxy-${PORT}.conf:/etc/nginx/conf.d/https-proxy-${PORT}.conf:ro \
       -v $HOME/.dev_cert/dev.rdc.cert.pem:/etc/nginx/certs/cert.pem \
       -v $HOME/.dev_cert/dev.rdc.key.pem:/etc/nginx/certs/key.pem \
@@ -108,7 +108,6 @@ stop() {
   if [[ -n "$cid" ]]; then
     sg close all $1
     docker container stop $cid > /dev/null
-    docker container rm $cid > /dev/null
     rm /tmp/https-proxy-$1.conf
   else
     echo "proxy not running"
