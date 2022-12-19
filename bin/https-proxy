@@ -88,7 +88,7 @@ start() {
       -v /tmp/https-proxy-${PORT}.conf:/etc/nginx/conf.d/https-proxy-${PORT}.conf:ro \
       -v $HOME/.dev_cert/dev.rdc.cert.pem:/etc/nginx/certs/cert.pem \
       -v $HOME/.dev_cert/dev.rdc.key.pem:/etc/nginx/certs/key.pem \
-      -p ${PORT}:443 nginx)
+      -p ${PORT}:443 nginx:alpine)
     if [[ $? == 0 ]]; then
       sg open all $1
       echo "Proxying http://${DEV_PREFIX}.dev.rdc.library.northwestern.edu:$1/ to local port $2"
