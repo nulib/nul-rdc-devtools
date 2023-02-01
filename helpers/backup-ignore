@@ -1,4 +1,5 @@
 **/.aws-sam
+**/.next
 **/.terraform
 **/.terraform.d
 **/.tflint.d
@@ -6,6 +7,7 @@
 .asdf
 .aws/adfs_cookies_*
 .aws/adfs_cache
+.bundle
 .cache
 .c9
 .gem
@@ -28,3 +30,7 @@ environment/**/builds
 environment/**/deps
 environment/**/erl_crash.dump
 environment/**/priv/static
+environment/**/public/packs
+environment/**/public/packs-*
+environment/**/tmp
+environment/**/vendor
