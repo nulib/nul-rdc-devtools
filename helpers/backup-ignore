@@ -1,3 +1,4 @@
+**/.aws-sam
 **/.terraform
 **/.terraform.d
 **/.tflint.d
@@ -16,6 +17,7 @@
 .nvm
 .rvm
 .vscode-server
+.vscode-server-insiders
 .vscodium-server
 .zcompdump-*
 environment/**/.aws_sam
