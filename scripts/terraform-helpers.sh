@@ -4,7 +4,7 @@ function aws_environment () {
 
 function tfselect () {
 	export AWS_PROFILE=$1-admin
-	aws-adfs login --profile $AWS_PROFILE
+	aws sts get-caller-identity --no-cli-pager > /dev/null 2>&1 || aws sso login
 	terraform workspace select $1 || terraform workspace new $1
 }
 
