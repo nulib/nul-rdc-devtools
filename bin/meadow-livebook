@@ -1,0 +1,28 @@
+#!/bin/bash
+
+MEADOW_LIVEBOOK_DATA_PATH=${MEADOW_LIVEBOOK_DATA_PATH:-$HOME/.meadow_livebook}
+
+if [ ! -f $MEADOW_LIVEBOOK_DATA_PATH/livebook_config.ets  ]; then
+  mkdir -p $MEADOW_LIVEBOOK_DATA_PATH
+  tar xjf $HOME/.nul-rdc-devtools/helpers/meadow_livebook_init.tar.bz2 -C $MEADOW_LIVEBOOK_DATA_PATH 
+fi
+
+MEADOW_COOKIE=$(openssl rand -hex 16)
+sg open all 8080 8081 > /dev/null
+cid=$(docker run --rm -it -d --name livebook_meadow \
+  -v $HOME/.meadow_livebook:/data \
+  -u $(id -u):$(id -g) \
+  -e LIVEBOOK_DATA_PATH=/data \
+  -e LIVEBOOK_DEFAULT_RUNTIME=attached:meadow:$MEADOW_COOKIE \
+  -e LIVEBOOK_HOME=/data/books \
+  -e LIVEBOOK_IP=0.0.0.0 \
+  --network=host \
+  ghcr.io/livebook-dev/livebook)
+startup_info=$(until docker logs livebook_meadow | grep -m 1 "Application running at"; do : ; done)
+token=$(cut -d '?' -f 2 <<< $startup_info)
+url="http://${DEV_PREFIX}.dev.rdc.library.northwestern.edu:8080/?${token}"
+echo "Meadow Livebook running at $url"
+python -m webbrowser -t "$url"
+iex --sname meadow --cookie $MEADOW_COOKIE -S mix $@
+docker stop livebook_meadow > /dev/null
+sg close all 8080 8081 > /dev/null
