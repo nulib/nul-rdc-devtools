@@ -71,12 +71,21 @@ keepalive_file_exists() {
     fi
 }
 
+is_tmux_session_active() {
+    PGREP=$(which pgrep)
+    $PGREP tmux > /dev/null
+    return $?
+}
+
 prevent_shutddown() {
     if [[ ! $SHUTDOWN_TIMEOUT =~ ^[0-9]+$ ]]; then
         echo "stop-if-inactive.sh: No timeout set." >&2
         return 0
     elif keepalive_file_exists; then
         echo "stop-if-inactive.sh: ~/.keep-alive detected." >&2
+        return 0
+    elif is_tmux_session_active; then
+        echo "stop-if-inactive.sh: tmux session active" >&2
         return 0
     elif is_vscode_connected && is_ssm_session_active; then
         echo "stop-if-inactive.sh: VS Code is connected." >&2
