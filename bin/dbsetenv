@@ -1,0 +1,12 @@
+#!/bin/bash
+
+secrets=$(aws secretsmanager get-secret-value --secret-id dev-environment/config/meadow --query SecretString --output text)
+
+get_parameter() {
+  jq -r ".db.$1" <<< $secrets
+}
+
+export PGHOST=$(get_parameter host)
+export PGPORT=$(get_parameter port)
+export PGUSER=$(get_parameter user)
+export PGPASSWORD=$(get_parameter password)
