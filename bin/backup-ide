@@ -62,12 +62,13 @@ vscode-flavor-restore() {
         arch="x64"
         ;;
     esac
+    echo "ARCH IS: $arch"
 
     mkdir -p $HOME/.vs${codename}-server/bin/${commit}
     if [[ $codename == "codium" ]]; then
       DOWNLOAD_URL=https://github.com/VSCodium/vscodium/releases/download/${version}/vscodium-reh-linux-${arch}-${version}.tar.gz
     else
-      DOWNLOAD_URL=https://update.code.visualstudio.com/commit:${commit}/server-linux-x64/stable
+      DOWNLOAD_URL=https://update.code.visualstudio.com/commit:${commit}/server-linux-${arch}/stable
     fi
     curl -Ls $DOWNLOAD_URL | tar xz --strip-components=1 -C $HOME/.vs${codename}-server/bin/${commit}
 
