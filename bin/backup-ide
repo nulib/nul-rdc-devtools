@@ -52,8 +52,16 @@ vscode-flavor-restore() {
     echo "Restoring VS $codename extensions & settings" >&2
     version_info=$(cat $HOME/.backup-ide/vs${codename}/version)
     commit=$(jq -r '.commit' <<< $version_info)
-    arch=$(jq -r '.arch' <<< $version_info)
     version=$(jq -r '[.version, .release] | map(select(length > 0)) | join(".")' <<< $version_info)
+
+    case $(uname -i) in
+      aarch64 | arm64)
+        arch="arm64"
+        ;;
+      *)
+        arch="x64"
+        ;;
+    esac
 
     mkdir -p $HOME/.vs${codename}-server/bin/${commit}
     if [[ $codename == "codium" ]]; then
