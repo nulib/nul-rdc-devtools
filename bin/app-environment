@@ -12,6 +12,38 @@ get-ssm-param() {
 
 AWS_ACCOUNT=$(aws sts get-caller-identity | jq -r .Account)
 
+arch() {
+  cat <<__EOC__
+export AWS_REGION="us-east-1"
+export CONTAINER_ROLE="webapp"
+export DB_HOST=$(get-secret-value db.host)
+export DB_PORT=$(get-secret-value db.port)
+export DB_PASSWORD=$(get-secret-value db.password)
+export DB_USER=$(get-secret-value db.user)
+export FEDORA_BASE_PATH="/arch"
+export FEDORA_URL="http://samvera-stack.internal.dev.rdc.library.northwestern.edu:8080/rest"
+export RACK_ENV="development"
+export RAILS_LOG_TO_STDOUT="true"
+export RAILS_LOG_WITH_LOGRAGE="true"
+export RAILS_SERVE_STATIC_FILES="true"
+export REDIS_HOST=samvera-stack.internal.dev.rdc.library.northwestern.edu
+export REDIS_PORT=6379
+export SECRET_KEY_BASE=$(openssl rand -hex 32)
+export SETTINGS__ACTIVE_JOB__QUEUE_ADAPTER=sidekiq
+export SETTINGS__DOMAIN__HOST=${DEV_PREFIX}.dev.rdc.library.northwestern.edu
+export SETTINGS__DOMAIN__PORT=3001
+export SETTINGS__DOMAIN__PROTOCOL=https
+export SETTINGS__FEDORA__URL=http://samvera-stack.internal.dev.rdc.library.northwestern.edu:8080/rest/
+export SETTINGS__FEDORA__BASE_PATH="/arch-<%= Rails.env %>"
+export SETTINGS__FFMPEG__PATH=/usr/bin/ffmpeg
+export SETTINGS__REDIS__HOST=samvera-stack.internal.dev.rdc.library.northwestern.edu
+export SETTINGS__REDIS__PORT=6379
+export SETTINGS__SOLR_URL="http://samvera-stack.internal.dev.rdc.library.northwestern.edu:8983/solr/arch-<%= Rails.env %>"
+export SETTINGS__ZOOKEEPER__CONNECTION_STR=samvera-stack.internal.dev.rdc.library.northwestern.edu:9983/configs
+export SOLR_URL="http://samvera-stack.internal.dev.rdc.library.northwestern.edu:8983/solr/arch-<%= Rails.env %>"
+__EOC__
+}
+
 avr() {
   cat <<__EOC__
 export DB_HOST=$(get-secret-value db.host)
@@ -62,8 +94,12 @@ write-environment() {
 }
 
 case $1 in
+  arch)
+    echo "Configuring current environment for Arch..." >&2
+    write-environment arch
+    ;;
   avr)
-    echo "Configuring current environment for AVRs..." >&2
-    write-environment avr  
+    echo "Configuring current environment for AVR..." >&2
+    write-environment avr
     ;;
 esac

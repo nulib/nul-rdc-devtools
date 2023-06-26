@@ -1,10 +1,12 @@
 #!/bin/bash
 
-secrets=$(aws secretsmanager get-secret-value --secret-id dev-environment/config/meadow --query SecretString --output text)
+SECRETS_PATH=${SECRETS_PATH:-config}
+secrets=$(aws secretsmanager get-secret-value --secret-id ${SECRETS_PATH}/meadow --query SecretString --output text)
 
 get_parameter() {
   jq -r ".db.$1" <<< $secrets
 }
 
 DEV_ENV=${DEV_ENV:-dev}
-PGPASSWORD=$(get_parameter password) psql -h $(get_parameter host) -p $(get_parameter port) -U $(get_parameter user) ${DEV_PREFIX}-${DEV_ENV}-meadow
+DB_NAME=${DB_NAME:-${DEV_PREFIX}-${DEV_ENV}-meadow}
+PGPASSWORD=$(get_parameter password) psql -h $(get_parameter host) -p $(get_parameter port) -U $(get_parameter user) $DB_NAME
