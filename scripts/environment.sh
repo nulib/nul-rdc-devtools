@@ -14,7 +14,10 @@ fi
 
 RETURN=$PWD
 cd $HOME/environment/miscellany
-git pull origin >/dev/null 2>&1
+git remote update origin >/dev/null 2>&1
+if git status -uno | grep behind >/dev/null 2>&1; then
+  git pull origin >/dev/null 2>&1
+fi
 source ./secrets/dev_environment.sh >/dev/null 2>&1
 cd $RETURN
 
@@ -31,5 +34,7 @@ export SECRETS_PATH=dev-environment/config
 export SHARED_BUCKET=nul-shared-prod-staging
 export SSL_CERT=$HOME/.dev_cert/dev.rdc.cert.pem
 export SSL_KEY=$HOME/.dev_cert/dev.rdc.key.pem
-export PATH=$HOME/.nul-rdc-devtools/bin:$PATH
+if ! grep .nul-rdc-devtools/bin <<< $PATH >/dev/null 2>&1; then
+  export PATH=$HOME/.nul-rdc-devtools/bin:$PATH
+fi
 export JWT_TOKEN_SECRET=$SECRET_KEY_BASE
