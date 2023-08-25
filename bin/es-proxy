@@ -20,7 +20,9 @@ start-dev() {
   if [[ -n "$cid" ]]; then
     echo "es-proxy already running for dev cluster"
   else
-    output=$(docker run --name es-proxy-dev --rm -d -v $(dirname $0)/../helpers/es-proxy.conf:/etc/nginx/conf.d/es-proxy.conf:ro -p $PORT:$PORT nginx:alpine)
+    output=$(docker run --name es-proxy-dev --rm -d \
+      -v $(dirname $0)/../helpers/es-proxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro \
+      -p $PORT:9200 haproxy:2.4-alpine)
     if [[ $? == 0 ]]; then
       started dev
     else
