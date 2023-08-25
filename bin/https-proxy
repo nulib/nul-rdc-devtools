@@ -19,6 +19,13 @@ defaults
 frontend HTTPS
   bind                0.0.0.0:443 ssl crt /etc/ssl/certs/cert.pem
   mode                http
+  http-request        set-var(txn.proto) str('http') if !{ ssl_fc }
+  http-request        set-var(txn.proto) str('https') if { ssl_fc }
+  http-request        set-header X-Forwarded-Base %[var(txn.proto)]://%[req.hdr(Host)]/
+  http-request        set-header X-Forwarded-Host %[req.hdr(Host)]
+  http-request        set-header X-Forwarded-Proto %[var(txn.proto)]
+  http-request        set-header X-Forwarded-Port %[src_port]
+  http-request        set-header X-Real-IP %[src]
   default_backend     Upstream
 backend Upstream
   mode                http
