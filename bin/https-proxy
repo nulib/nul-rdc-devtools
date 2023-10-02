@@ -26,6 +26,9 @@ frontend HTTPS
   http-request        set-header X-Forwarded-Proto %[var(txn.proto)]
   http-request        set-header X-Forwarded-Port %[src_port]
   http-request        set-header X-Real-IP %[src]
+  http-response       set-header Access-Control-Allow-Credentials false
+  http-response       set-header Access-Control-Allow-Headers *
+  http-response       set-header Access-Control-Allow-Origin *
   default_backend     Upstream
 backend Upstream
   mode                http
