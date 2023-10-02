@@ -7,5 +7,7 @@ source $dir/environment.sh
 source $dir/asdf-helpers.sh
 source $dir/terraform-helpers.sh
 
+$dir/show-uptime.sh
+
 . $HOME/.asdf/asdf.sh
 eval "$(direnv hook $(basename $SHELL))"
