@@ -1,0 +1,5 @@
+#!/bin/bash
+
+. $(dirname $0)/../scripts/instance-info.sh
+echo "Retrieving public keys for GitHub user $INSTANCE_TAG_GITHUBID"
+curl -s https://github.com/${INSTANCE_TAG_GITHUBID}.keys | awk '{ print $0, "'$INSTANCE_TAG_GITHUBID@github'" }' > $HOME/.ssh/authorized_keys

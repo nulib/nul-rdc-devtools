@@ -1,4 +1,4 @@
-instance_id=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
+. $(dirname $0)/instance-info.sh
 secrets=$(aws secretsmanager get-secret-value --secret-id dev-environment/config/meadow --query SecretString --output text)
 
 if [[ ! -e $HOME/.dev_cert/dev.rdc.cert.pem ]] || ! openssl x509 -in $HOME/.dev_cert/dev.rdc.cert.pem -noout -checkend 0 >/dev/null; then
@@ -25,7 +25,7 @@ export AWS_DEV_ENVIRONMENT=true
 export AWS_REGION=$(curl -s http://169.254.169.254/latest/dynamic/instance-identity/document | jq -r '.region')
 export AWS_SDK_LOAD_CONFIG=1
 export DEV_ENV=dev
-export DEV_PREFIX=$(aws ec2 describe-tags --filters "Name=resource-id,Values=$instance_id" "Name=key,Values=Owner" | jq -r '.Tags[].Value')
+export DEV_PREFIX=$INSTANCE_TAG_OWNER
 export ERL_AFLAGS="-kernel shell_history enabled"
 #export NUSSO_API_KEY=$(jq -r .nusso.api_key <<< $secrets)
 #export NUSSO_BASE_URL=$(jq -r .nusso.base_url <<< $secrets)
