@@ -66,4 +66,4 @@ if [[ -f /home/ec2-user/.keep-alive ]]; then procs+=("~/.keep-alive"); fi
 if [[ -z $procs ]]; then procs=("none"); fi
 
 printf -v display_procs '%s, ' "${procs[@]}"
-echo -e "Conditions preventing shutdown: ${YELLOW}${display_procs%, }${NOCOLOR}"
+echo -e "Conditions preventing shutdown: ${COLOR}${display_procs%, }${NOCOLOR}"
