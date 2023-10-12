@@ -144,6 +144,16 @@ home-restore() {
   fi
 }
 
+package-backup() {
+  dnf repoquery --qf '%{name}' --userinstalled > $HOME/.backup-ide/installed_packages.txt
+}
+
+package-restore() {
+  if [[ -e $HOME/.backup-ide/installed_packages.txt ]]; then
+    < $HOME/.backup-ide/installed_packages.txt xargs sudo dnf -y install
+  fi
+}
+
 display-help() {
   cat <<__EOC__ >&2
 This script will back up your home directory to a shared S3 bucket so it can be
@@ -179,12 +189,12 @@ COMMAND=$1
 
 case $COMMAND in
   backup)
-    for component in asdf vscode links home; do
+    for component in asdf vscode links package home; do
       ${component}-backup $@
     done
     ;;
   restore)
-    for component in home vscode links asdf; do
+    for component in home package vscode links asdf; do
       ${component}-restore $@
     done
     ;;
