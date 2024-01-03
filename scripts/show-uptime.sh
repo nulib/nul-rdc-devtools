@@ -60,8 +60,9 @@ fi
 echo -e "System up for ${COLOR}${running_human}${NOCOLOR}"
 
 procs=()
-if (pgrep -u ec2-user -f ".vscod(e|ium)-server(-insiders)?/bin/" > /dev/null); then procs+=("vscode"); fi
+if (pgrep -u ec2-user -f ".(cursor|vscod(e|ium))-server(-insiders)?/bin/" > /dev/null); then procs+=("vscode"); fi
 if (pgrep -u ec2-user -f "tmux" > /dev/null); then procs+=("tmux"); fi
+if [[ -f /tmp/maintenance ]]; then procs+=("system maintenance"); fi
 if [[ -f /home/ec2-user/.keep-alive ]]; then procs+=("~/.keep-alive"); fi
 if [[ -z $procs ]]; then procs=("none"); fi
 

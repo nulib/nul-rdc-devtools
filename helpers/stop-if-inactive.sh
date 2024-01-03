@@ -43,7 +43,7 @@ is_vscode_connected() {
     PGREP=$(which pgrep)
     LSOF=$(which lsof)
     PATH=$OLD_PATH
-    VSCODE_PIDS=$($PGREP -u ec2-user -f ".vscod(e|ium)-server(-insiders)?/bin/" | tr "\n" ',')
+    VSCODE_PIDS=$($PGREP -u ec2-user -f ".(cursor|vscod(e|ium))-server(-insiders)?/bin/" | tr "\n" ',')
     if [[ -n $VSCODE_PIDS ]] && $LSOF -p $VSCODE_PIDS 2>/dev/null | grep '(LISTEN)' >/dev/null; then
         return 0
     else
@@ -61,10 +61,8 @@ is_ssm_session_active() {
     fi
 }
 
-keepalive_file_exists() {
-    local FILE
-    FILE=/home/ec2-user/.keep-alive
-    if [[ -f "$FILE" ]]; then
+file_exists() {
+    if [[ -f "$1" ]]; then
         return 0
     else
         return 1
@@ -81,7 +79,10 @@ prevent_shutddown() {
     if [[ ! $SHUTDOWN_TIMEOUT =~ ^[0-9]+$ ]]; then
         echo "stop-if-inactive.sh: No timeout set." >&2
         return 0
-    elif keepalive_file_exists; then
+    elif file_exists /tmp/maintenance; then
+        echo "stop-if-inactive.sh: system maintenance in progress." >&2
+        return 0
+    elif file_exists /home/ec2-user/.keep-alive; then
         echo "stop-if-inactive.sh: ~/.keep-alive detected." >&2
         return 0
     elif is_tmux_session_active; then

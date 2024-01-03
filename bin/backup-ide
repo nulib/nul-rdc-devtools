@@ -31,16 +31,16 @@ asdf-restore() {
 
 vscode-flavor-backup() {
   codename=${1:-code}
-  if [[ -e $HOME/.vs${codename}-server ]]; then
-    commit=$(ls -t $HOME/.vs${codename}-server/bin/ 2>/dev/null | head -1)
-    if [[ -n $commit && -e $HOME/.vs${codename}-server/bin/${commit}/bin/${codename}-server ]]; then
-      echo "Backing up VS $codename extensions & settings" >&2
-      mkdir -p $HOME/.backup-ide/vs${codename}
-      arch=$($HOME/.vs${codename}-server/bin/${commit}/bin/${codename}-server --version | tail -1)
-      jq --arg commit $commit --arg arch $arch '. += {"commit": $commit, "arch": $arch}' < $HOME/.vs${codename}-server/bin/${commit}/package.json > $HOME/.backup-ide/vs${codename}/version
-      $HOME/.vs${codename}-server/bin/${commit}/bin/${codename}-server --list-extensions > $HOME/.backup-ide/vs${codename}/extensions
-      if [[ -e $HOME/.vs${codename}-server/data/Machine/settings.json ]]; then
-        cp $HOME/.vs${codename}-server/data/Machine/settings.json $HOME/.backup-ide/vs${codename}/
+  if [[ -e $HOME/.${codename}-server ]]; then
+    commit=$(ls -t $HOME/.${codename}-server/bin/ 2>/dev/null | head -1)
+    if [[ -n $commit && -e $HOME/.${codename}-server/bin/${commit}/bin/${codename##vs}-server ]]; then
+      echo "Backing up $codename extensions & settings" >&2
+      mkdir -p $HOME/.backup-ide/${codename}
+      arch=$($HOME/.${codename}-server/bin/${commit}/bin/${codename##vs}-server --version | tail -1)
+      jq --arg commit $commit --arg arch $arch '. += {"commit": $commit, "arch": $arch}' < $HOME/.${codename}-server/bin/${commit}/package.json > $HOME/.backup-ide/${codename}/version
+      $HOME/.${codename}-server/bin/${commit}/bin/${codename##vs}-server --list-extensions > $HOME/.backup-ide/${codename}/extensions
+      if [[ -e $HOME/.${codename}-server/data/Machine/settings.json ]]; then
+        cp $HOME/.${codename}-server/data/Machine/settings.json $HOME/.backup-ide/${codename}/
       fi
     fi
   fi
@@ -48,9 +48,9 @@ vscode-flavor-backup() {
 
 vscode-flavor-restore() {
   codename=${1:-code}
-  if [[ -e $HOME/.backup-ide/vs${codename}/version ]]; then
-    echo "Restoring VS $codename extensions & settings" >&2
-    version_info=$(cat $HOME/.backup-ide/vs${codename}/version)
+  if [[ -e $HOME/.backup-ide/${codename}/version ]]; then
+    echo "Restoring $codename extensions & settings" >&2
+    version_info=$(cat $HOME/.backup-ide/${codename}/version)
     commit=$(jq -r '.commit' <<< $version_info)
     version=$(jq -r '[.version, .release] | map(select(length > 0)) | join(".")' <<< $version_info)
 
@@ -64,37 +64,39 @@ vscode-flavor-restore() {
     esac
     echo "ARCH IS: $arch"
 
-    mkdir -p $HOME/.vs${codename}-server/bin/${commit}
+    mkdir -p $HOME/.${codename}-server/bin/${commit}
     if [[ $codename == "codium" ]]; then
       DOWNLOAD_URL=https://github.com/VSCodium/vscodium/releases/download/${version}/vscodium-reh-linux-${arch}-${version}.tar.gz
     else
       DOWNLOAD_URL=https://update.code.visualstudio.com/commit:${commit}/server-linux-${arch}/stable
     fi
-    curl -Ls $DOWNLOAD_URL | tar xz --strip-components=1 -C $HOME/.vs${codename}-server/bin/${commit}
+    curl -Ls $DOWNLOAD_URL | tar xz --strip-components=1 -C $HOME/.${codename}-server/bin/${commit}
 
-    if [[ -e $HOME/.backup-ide/vs${codename}/extensions ]]; then
+    if [[ -e $HOME/.backup-ide/${codename}/extensions ]]; then
       install_params=""
-      for ext in $(cat $HOME/.backup-ide/vs${codename}/extensions); do
+      for ext in $(cat $HOME/.backup-ide/${codename}/extensions); do
         install_params="$install_params --install-extension $ext"
       done
-      $HOME/.vs${codename}-server/bin/${commit}/bin/${codename}-server $install_params
+      $HOME/.${codename}-server/bin/${commit}/bin/${codename##vs}-server $install_params
     fi
 
-    if [[ -e $HOME/.backup-ide/vs${codename}/settings.json ]]; then
-      mkdir -p $HOME/.vs${codename}-server/data/Machine
-      cp  $HOME/.backup-ide/vs${codename}/settings.json $HOME/.vs${codename}-server/data/Machine/settings.json
+    if [[ -e $HOME/.backup-ide/${codename}/settings.json ]]; then
+      mkdir -p $HOME/.${codename}-server/data/Machine
+      cp  $HOME/.backup-ide/${codename}/settings.json $HOME/.${codename}-server/data/Machine/settings.json
     fi
   fi
 }
 
 vscode-backup() {
-  vscode-flavor-backup code
-  vscode-flavor-backup codium
+  vscode-flavor-backup vscode
+  vscode-flavor-backup vscodium
+  vscode-flavor-backup cursor
 }
 
 vscode-restore() {
-  vscode-flavor-restore code
-  vscode-flavor-restore codium
+  vscode-flavor-restore vscode
+  vscode-flavor-restore vscodium
+  vscode-flavor-restore cursor
 }
 
 backup-filename() {
@@ -125,7 +127,7 @@ home-backup() {
   FILE=$(backup-filename $2)
   echo "Creating tarball of $HOME in /tmp/$FILE..." >&2
   set +e
-  tar cjf /tmp/$FILE -C $HOME --exclude-from=$HOME/.nul-rdc-devtools/helpers/backup-ignore .
+  tar cjf /tmp/$FILE -C $HOME --exclude-tag=.no-backup --exclude-from=$HOME/.nul-rdc-devtools/helpers/backup-ignore .
   exitcode=$?
   if [ $exitcode -gt 1 ]; then exit $exitcode; fi
   set -e

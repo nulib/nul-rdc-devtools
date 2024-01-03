@@ -16,6 +16,7 @@
 .cache
 .c9
 .conda
+.cursor-server
 .gem
 .hex
 .ipython
