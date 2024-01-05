@@ -189,15 +189,31 @@ __EOC__
 
 COMMAND=$1
 
+should() {
+  action=$(tr a-z A-Z <<< $1)
+  target=$(tr a-z A-Z <<< $2)
+  flag_name=NO_${action}_${target}
+  flag=${!flag_name}
+  if [[ -z $flag ]]; then
+    true
+  else
+    false
+  fi
+}
+
 case $COMMAND in
   backup)
     for component in asdf vscode links package home; do
-      ${component}-backup $@
+      if should backup $component; then
+        ${component}-backup $@
+      fi
     done
     ;;
   restore)
     for component in home package vscode links asdf; do
-      ${component}-restore $@
+      if should restore $component; then
+        ${component}-restore $@
+      fi
     done
     ;;
   delete)
