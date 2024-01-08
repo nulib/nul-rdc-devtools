@@ -1,0 +1,7 @@
+#!/bin/bash
+
+touch /tmp/maintenance
+dnf update -y --security --bugfix
+sudo -Hiu ec2-user sh -c "cd /home/ec2-user/.nul-rdc-devtools && git pull origin && bin/backup-ide backup"
+rm -f /tmp/maintenance
+/home/ec2-user/.ide/ec2-shutdown.sh schedule
