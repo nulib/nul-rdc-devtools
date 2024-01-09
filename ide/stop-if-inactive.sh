@@ -25,7 +25,7 @@ is_vscode_connected() {
 
 instance_state() {
     instance_id=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
-    /usr/local/bin/aws ec2 describe-instances --instance-ids $instance_id --query 'Reservations[*].Instances[*].State.Name' --output text
+    /usr/local/bin/aws ec2 describe-instances --instance-ids $instance_id --query 'Reservations[*].Instances[*].State.Name' --output text --no-cli-pager
 }
 
 is_ssm_session_active() {
@@ -69,9 +69,6 @@ prevent_shutddown() {
         return 1
     fi
 }
-
-# Offset the shutdown check by 15 seconds to avoid race condition with shutdown timer
-sleep 15
 
 CURRENT_STATE=$(instance_state)
 if [[ $CURRENT_STATE != "running" ]]; then
