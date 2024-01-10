@@ -3,15 +3,10 @@
 
 #!/bin/bash
 set -euo pipefail
-CONFIG=$(cat $(dirname $0)/autoshutdown-configuration)
-SHUTDOWN_TIMEOUT=${CONFIG#*=}
-if ! [[ $SHUTDOWN_TIMEOUT =~ ^[0-9]*$ ]]; then
-    echo "shutdown timeout is invalid"
-    exit 1
-fi
+SHUTDOWN_SCRIPT="$(dirname $0)/ec2-shutdown.sh"
 
 is_shutting_down() {
-    shutdown --show 2> >(grep "^Shutdown scheduled for " > /dev/null)
+    $SHUTDOWN_SCRIPT check
 }
 
 is_vscode_connected() {
@@ -26,6 +21,11 @@ is_vscode_connected() {
     else
         return 1
     fi
+}
+
+instance_state() {
+    instance_id=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
+    /usr/local/bin/aws ec2 describe-instances --instance-ids $instance_id --query 'Reservations[*].Instances[*].State.Name' --output text --no-cli-pager
 }
 
 is_ssm_session_active() {
@@ -53,10 +53,7 @@ is_tmux_session_active() {
 }
 
 prevent_shutddown() {
-    if [[ ! $SHUTDOWN_TIMEOUT =~ ^[0-9]+$ ]]; then
-        echo "stop-if-inactive.sh: No timeout set." >&2
-        return 0
-    elif file_exists /tmp/maintenance; then
+    if file_exists /tmp/maintenance; then
         echo "stop-if-inactive.sh: system maintenance in progress." >&2
         return 0
     elif file_exists /home/ec2-user/.keep-alive; then
@@ -73,15 +70,20 @@ prevent_shutddown() {
     fi
 }
 
-if is_shutting_down; then
+CURRENT_STATE=$(instance_state)
+if [[ $CURRENT_STATE != "running" ]]; then
+    echo "stop-if-inactive.sh: System in '$CURRENT_STATE' state"
+elif is_shutting_down; then
     if prevent_shutddown; then
-        echo "stop-if-inactive.sh: Canceling shutdown." >&2
-        sudo shutdown -c
+        echo -n "stop-if-inactive.sh: " >&2
+        $SHUTDOWN_SCRIPT cancel
+        wall "System shutdown canceled."
     fi
 else
     if ! prevent_shutddown; then
-        echo "stop-if-inactive.sh: Scheduling shutdown in $SHUTDOWN_TIMEOUT minutes." >&2
-        sudo shutdown -h $SHUTDOWN_TIMEOUT
+        echo -n "stop-if-inactive.sh: " >&2
+        $SHUTDOWN_SCRIPT schedule
+        $SHUTDOWN_SCRIPT notify
     fi
 fi
 touch $HOME/.last_inactive_check

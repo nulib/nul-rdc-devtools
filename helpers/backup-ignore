@@ -19,6 +19,7 @@
 .cursor-server
 .gem
 .hex
+.ide
 .ipython
 .keep-alive
 .local
