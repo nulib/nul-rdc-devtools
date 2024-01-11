@@ -57,7 +57,7 @@ start() {
       -p ${PORT}:443 haproxy:2.4-alpine)
     if [[ $? == 0 ]]; then
       sg open all $1
-      echo "Proxying http://${DEV_PREFIX}.dev.rdc.library.northwestern.edu:$1/ to local port $2"
+      echo "Proxying https://${DEV_PREFIX}.dev.rdc.library.northwestern.edu:$1/ to local port $2"
     else
       echo $output
     fi
