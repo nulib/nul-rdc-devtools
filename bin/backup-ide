@@ -138,7 +138,7 @@ config-restic() {
 restic-command() {
   ROLE=$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/)
   eval export $(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/$ROLE | jq -r '"AWS_ACCESS_KEY_ID=\(.AccessKeyId) AWS_SECRET_ACCESS_KEY=\(.SecretAccessKey) AWS_SESSION_TOKEN=\(.Token)"')
-  restic $@
+  RESTIC_PASSWORD=$(config-value backup_key) restic -r $(backup-repository $(shared-bucket) $(backup-prefix $1)) $@
   STATUS=$?
   unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
   return $STATUS
