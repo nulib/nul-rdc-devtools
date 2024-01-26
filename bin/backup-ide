@@ -121,7 +121,7 @@ home-backup() {
     restic-command init
   fi
   echo "Backing up $HOME to $RESTIC_REPOSITORY" >&2
-  restic-command backup --host $DEV_PREFIX --group-by host --exclude-if-present .no-backup --exclude-file $HOME/.nul-rdc-devtools/helpers/backup-ignore $HOME
+  restic-command backup --host $DEV_PREFIX --exclude-if-present .no-backup --exclude-file $HOME/.nul-rdc-devtools/helpers/backup-ignore $HOME
   restic-command forget --keep-weekly 3 
 }
 
