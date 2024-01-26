@@ -99,6 +99,16 @@ vscode-restore() {
   vscode-flavor-restore cursor
 }
 
+links-backup() {
+  pushd $HOME
+  find . -type l | xargs tar cjf $HOME/.backup-ide/symlinks.tar.bz2 --exclude-from=$HOME/.nul-rdc-devtools/helpers/backup-ignore
+  popd
+}
+
+links-restore() {
+  tar xjf $HOME/.backup-ide/symlinks.tar.bz2 -C $HOME
+}
+
 backup-prefix() {
   INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
   TAG_DATA=$(aws ec2 describe-tags --filters Name=resource-id,Values=$INSTANCE_ID)
@@ -117,29 +127,17 @@ shared-bucket() {
 }
 
 backup-repository() {
-  echo "s3:s3.amazonaws.com/$1/homes/$2"
-}
-
-links-backup() {
-  pushd $HOME
-  find . -type l | xargs tar cjf $HOME/.backup-ide/symlinks.tar.bz2 --exclude-from=$HOME/.nul-rdc-devtools/helpers/backup-ignore
-  popd
-}
-
-links-restore() {
-  tar xjf $HOME/.backup-ide/symlinks.tar.bz2 -C $HOME
+  echo "s3:s3.amazonaws.com/$1/ide-backups/$2"
 }
 
 config-restic() {
-  SHARED_BUCKET=$(shared-bucket)
-  PREFIX=$(backup-prefix $2)
-  RESTIC_REPOSITORY=$(backup-repository $SHARED_BUCKET $PREFIX)
+  RESTIC_REPOSITORY=$(backup-repository $(shared-bucket) $(backup-prefix $1))
   RESTIC_PASSWORD=$(config-value backup_key)
 }
 
 restic-command() {
-  credfile=$(ls -t ~/.aws/cli/cache/ | head -1)  
-  eval export $(cat ~/.aws/cli/cache/$credfile | jq -r '.Credentials | "AWS_ACCESS_KEY_ID=\(.AccessKeyId) AWS_SECRET_ACCESS_KEY=\(.SecretAccessKey) AWS_SESSION_TOKEN=\(.SessionToken)"')
+  ROLE=$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/)
+  eval export $(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/$ROLE | jq -r '"AWS_ACCESS_KEY_ID=\(.AccessKeyId) AWS_SECRET_ACCESS_KEY=\(.SecretAccessKey) AWS_SESSION_TOKEN=\(.Token)"')
   restic $@
   STATUS=$?
   unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
@@ -153,7 +151,8 @@ home-backup() {
     restic-command init
   fi
   echo "Backing up $HOME to $RESTIC_REPOSITORY" >&2
-  restic-command backup --exclude-if-present .no-backup --exclude-file $HOME/.nul-rdc-devtools/helpers/backup-ignore $HOME
+  restic-command backup --host $(backup-prefix) --group-by host --exclude-if-present .no-backup --exclude-file $HOME/.nul-rdc-devtools/helpers/backup-ignore $HOME
+  restic-command forget --keep-weekly 3 
 }
 
 home-restore() {
@@ -163,7 +162,7 @@ home-restore() {
     return 1
   fi
   echo "Restoring $HOME from $RESTIC_REPOSITORY/" >&2
-  restic-command restore latest --target $HOME
+  restic-command restore latest --host $(backup-prefix) --target $HOME
 }
 
 package-backup() {
