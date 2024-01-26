@@ -1,6 +1,8 @@
 #!/bin/bash -e
 if [[ -n $DEBUG ]]; then set -x; fi
 
+source $(dirname $0)/../scripts/with-aws-role.sh
+
 asdf-backup() {
   echo "Saving list of asdf plugins and versions" >&2
   installed="{}"
@@ -109,60 +111,27 @@ links-restore() {
   tar xjf $HOME/.backup-ide/symlinks.tar.bz2 -C $HOME
 }
 
-backup-prefix() {
-  INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
-  TAG_DATA=$(aws ec2 describe-tags --filters Name=resource-id,Values=$INSTANCE_ID)
-  OWNER=$(jq -r '.Tags[] | select(.Key == "Owner") | .Value' <<< $TAG_DATA)
-  PREFIX=${1:-${OWNER}}
-  echo $PREFIX
-}
-
-config-value() {
-  aws secretsmanager get-secret-value --secret-id "dev-environment/terraform/common" --query "SecretString" --output text \
-    | jq -r .${1}
-}
-
-shared-bucket() {
-  config-value shared_bucket_arn | rev | cut -d ':' -f1 | rev
-}
-
-backup-repository() {
-  echo "s3:s3.amazonaws.com/$1/ide-backups/$2"
-}
-
-config-restic() {
-  RESTIC_REPOSITORY=$(backup-repository $(shared-bucket) $(backup-prefix $1))
-  RESTIC_PASSWORD=$(config-value backup_key)
-}
-
 restic-command() {
-  ROLE=$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/)
-  eval export $(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/$ROLE | jq -r '"AWS_ACCESS_KEY_ID=\(.AccessKeyId) AWS_SECRET_ACCESS_KEY=\(.SecretAccessKey) AWS_SESSION_TOKEN=\(.Token)"')
-  RESTIC_PASSWORD=$(config-value backup_key) restic -r $(backup-repository $(shared-bucket) $(backup-prefix)) $@
-  STATUS=$?
-  unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
-  return $STATUS
+  with-aws-role restic $@
 }
 
 home-backup() {
-  config-restic
   if ! restic-command cat config > /dev/null 2>&1; then
     echo "Initializing backup repository at $RESTIC_REPOSITORY" >&2
     restic-command init
   fi
   echo "Backing up $HOME to $RESTIC_REPOSITORY" >&2
-  restic-command backup --host $(backup-prefix) --group-by host --exclude-if-present .no-backup --exclude-file $HOME/.nul-rdc-devtools/helpers/backup-ignore $HOME
+  restic-command backup --host $DEV_PREFIX --group-by host --exclude-if-present .no-backup --exclude-file $HOME/.nul-rdc-devtools/helpers/backup-ignore $HOME
   restic-command forget --keep-weekly 3 
 }
 
 home-restore() {
-  config-restic
   if ! restic-command cat config > /dev/null 2>&1; then
     echo "No backup repository at $RESTIC_REPOSITORY" >&2
     return 1
   fi
   echo "Restoring $HOME from $RESTIC_REPOSITORY/" >&2
-  restic-command restore latest --host $(backup-prefix) --target $HOME
+  restic-command restore latest --host $DEV_PREFIX --target $HOME
 }
 
 package-backup() {

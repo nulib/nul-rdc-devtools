@@ -6,6 +6,7 @@ dir=$(dirname $0)
 source $dir/environment.sh
 source $dir/asdf-helpers.sh
 source $dir/terraform-helpers.sh
+source $dir/with-aws-role.sh
 
 $dir/show-uptime.sh
 
