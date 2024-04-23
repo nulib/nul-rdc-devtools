@@ -1,0 +1,3 @@
+#!/bin/bash
+
+ls -c /tmp/ssh-*/agent.* | head -1
