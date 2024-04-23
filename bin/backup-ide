@@ -31,76 +31,6 @@ asdf-restore() {
   fi
 }
 
-vscode-flavor-backup() {
-  codename=${1:-code}
-  if [[ -e $HOME/.${codename}-server ]]; then
-    commit=$(ls -t $HOME/.${codename}-server/bin/ 2>/dev/null | head -1)
-    if [[ -n $commit && -e $HOME/.${codename}-server/bin/${commit}/bin/${codename##vs}-server ]]; then
-      echo "Backing up $codename extensions & settings" >&2
-      mkdir -p $HOME/.backup-ide/${codename}
-      arch=$($HOME/.${codename}-server/bin/${commit}/bin/${codename##vs}-server --version | tail -1)
-      jq --arg commit $commit --arg arch $arch '. += {"commit": $commit, "arch": $arch}' < $HOME/.${codename}-server/bin/${commit}/package.json > $HOME/.backup-ide/${codename}/version
-      $HOME/.${codename}-server/bin/${commit}/bin/${codename##vs}-server --list-extensions > $HOME/.backup-ide/${codename}/extensions
-      if [[ -e $HOME/.${codename}-server/data/Machine/settings.json ]]; then
-        cp $HOME/.${codename}-server/data/Machine/settings.json $HOME/.backup-ide/${codename}/
-      fi
-    fi
-  fi
-}
-
-vscode-flavor-restore() {
-  codename=${1:-code}
-  if [[ -e $HOME/.backup-ide/${codename}/version ]]; then
-    echo "Restoring $codename extensions & settings" >&2
-    version_info=$(cat $HOME/.backup-ide/${codename}/version)
-    commit=$(jq -r '.commit' <<< $version_info)
-    version=$(jq -r '[.version, .release] | map(select(length > 0)) | join(".")' <<< $version_info)
-
-    case $(uname -i) in
-      aarch64 | arm64)
-        arch="arm64"
-        ;;
-      *)
-        arch="x64"
-        ;;
-    esac
-    echo "ARCH IS: $arch"
-
-    mkdir -p $HOME/.${codename}-server/bin/${commit}
-    if [[ $codename == "codium" ]]; then
-      DOWNLOAD_URL=https://github.com/VSCodium/vscodium/releases/download/${version}/vscodium-reh-linux-${arch}-${version}.tar.gz
-    else
-      DOWNLOAD_URL=https://update.code.visualstudio.com/commit:${commit}/server-linux-${arch}/stable
-    fi
-    curl -Ls $DOWNLOAD_URL | tar xz --strip-components=1 -C $HOME/.${codename}-server/bin/${commit}
-
-    if [[ -e $HOME/.backup-ide/${codename}/extensions ]]; then
-      install_params=""
-      for ext in $(cat $HOME/.backup-ide/${codename}/extensions); do
-        install_params="$install_params --install-extension $ext"
-      done
-      $HOME/.${codename}-server/bin/${commit}/bin/${codename##vs}-server $install_params
-    fi
-
-    if [[ -e $HOME/.backup-ide/${codename}/settings.json ]]; then
-      mkdir -p $HOME/.${codename}-server/data/Machine
-      cp  $HOME/.backup-ide/${codename}/settings.json $HOME/.${codename}-server/data/Machine/settings.json
-    fi
-  fi
-}
-
-vscode-backup() {
-  vscode-flavor-backup vscode
-  vscode-flavor-backup vscodium
-  vscode-flavor-backup cursor
-}
-
-vscode-restore() {
-  vscode-flavor-restore vscode
-  vscode-flavor-restore vscodium
-  vscode-flavor-restore cursor
-}
-
 links-backup() {
   pushd $HOME
   find . -type l | xargs tar cjf $HOME/.backup-ide/symlinks.tar.bz2 --exclude-from=$HOME/.nul-rdc-devtools/helpers/backup-ignore
@@ -191,14 +121,14 @@ should() {
 
 case $COMMAND in
   backup)
-    for component in asdf vscode links package home; do
+    for component in asdf links package home; do
       if should backup $component; then
         ${component}-backup $@
       fi
     done
     ;;
   restore)
-    for component in home package vscode links asdf; do
+    for component in home package links asdf; do
       if should restore $component; then
         ${component}-restore $@
       fi

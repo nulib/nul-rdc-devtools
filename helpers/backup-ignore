@@ -9,7 +9,6 @@
 .c9/
 .cache/
 .conda/
-.cursor-server/
 .elixir_ls/
 .gem/
 .hex/
@@ -29,9 +28,6 @@
 .tflint.d/
 .venv/
 .virtualenv/
-.vscode-server-insiders/
-.vscode-server/
-.vscodium-server/
 .yarn/
 .zcompdump-*/
 environment/**/_build/
