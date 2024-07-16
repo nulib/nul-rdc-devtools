@@ -1,0 +1,12 @@
+#!/bin/bash
+
+retrieve() {
+  param=$1
+  type=$2
+
+  aws secretsmanager get-secret-value --secret-id dev-environment/config/wildcard_ssl --query SecretString --output text | jq -r ".$param" > $HOME/.dev_cert/dev.rdc.$type.pem
+}
+
+retrieve certificate cert
+retrieve key key
+
