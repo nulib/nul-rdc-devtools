@@ -1,29 +1,36 @@
 . $(dirname $0)/instance-info.sh
 . $(dirname $0)/command-status.sh
 
-start_status "Retrieving secrets"
-secrets=$(aws secretsmanager get-secret-value --secret-id dev-environment/config/meadow --query SecretString --output text)
-stop_status
+# start_status "Retrieving secrets"
+# secrets=$(aws secretsmanager get-secret-value --secret-id dev-environment/config/meadow --query SecretString --output text)
+# stop_status
 
-start_status "Retrieving developer certificate"
-$(dirname $0)/../bin/refresh-dev-cert
-stop_status
+if [[ -n "$FORCE_UPDATE" || -z "$(find ~/.dev_cert/ -type f -mtime -1)" ]]; then
+  start_status "Retrieving developer certificate"
+  $(dirname $0)/../bin/refresh-dev-cert
+  stop_status
+fi
 
 RETURN=$PWD
-if [[ ! -e $HOME/environment/miscellany ]]; then
+MISC_DIR=$HOME/environment/miscellany
+if [[ ! -e $MISC_DIR ]]; then
   start_status "Cloning nulib/miscellany"
-  git clone git@github.com:nulib/miscellany.git $HOME/environment/miscellany >/dev/null 2>&1
-  cd $HOME/environment/miscellany >/dev/null 2>&1
-else
+  git clone git@github.com:nulib/miscellany.git $MISC_DIR >/dev/null 2>&1
+  touch $MISC_DIR/.gitrefresh
+  stop_status
+elif [[ -n "$FORCE_UPDATE" || -z "$(find $MISC_DIR -name .gitrefresh -mtime -1)" ]]; then
   start_status "Refreshing nulib/miscellany"
   cd $HOME/environment/miscellany >/dev/null 2>&1
   git remote update origin >/dev/null 2>&1
   if git status -uno | grep behind >/dev/null 2>&1; then
     git pull origin >/dev/null 2>&1
   fi
+  touch $MISC_DIR/.gitrefresh
+  stop_status
 fi
-stop_status
+
 start_status "Initializing environment"
+cd $HOME/environment/miscellany >/dev/null 2>&1
 . ./secrets/dev_environment.sh >/dev/null 2>&1
 cd $RETURN 2>&1
 stop_status
