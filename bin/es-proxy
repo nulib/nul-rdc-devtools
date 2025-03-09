@@ -15,40 +15,17 @@ stopped() {
   echo "Proxy to $1 cluster stopped"
 }
 
-start-dev() {
-  cid=$(instance "dev")
-  if [[ -n "$cid" ]]; then
-    echo "es-proxy already running for dev cluster"
-  else
-    output=$(docker run --name es-proxy-dev --rm -d \
-      -v $(dirname $0)/../helpers/es-proxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro \
-      -p $PORT:9200 haproxy:2.4-alpine)
-    if [[ $? == 0 ]]; then
-      started dev
-    else
-      echo $output
-    fi
-  fi
-}
-
-stop-dev() {
-  cid=$(instance "dev")
-  if [[ -n "$cid" ]]; then
-    docker stop $cid
-    stopped dev
-  else
-    echo "es-proxy not running for dev cluster"
-  fi
-}
-
 start-profile() {
-  SHORT_PROFILE=$(cut -d "-" -f 1 <<< $AWS_PROFILE)
+  if [[ -n $AWS_PROFILE ]]; then
+    PROFILE="--profile $AWS_PROFILE"
+  fi
+  SHORT_PROFILE=$1
   cid=$(instance $SHORT_PROFILE)
   if [[ -n "$cid" ]]; then
     echo "es-proxy already running for $SHORT_PROFILE cluster"
   else
-    aws --profile $AWS_PROFILE sts get-caller-identity --no-cli-pager > /dev/null 2>&1 || aws --profile $AWS_PROFILE sso login
-    ES_CONFIG=$(aws --profile $AWS_PROFILE secretsmanager get-secret-value --secret-id "${SHORT_PROFILE}/infrastructure/index" --query "SecretString" --output text)
+    aws $PROFILE sts get-caller-identity --no-cli-pager > /dev/null 2>&1 || aws $PROFILE sso login
+    ES_CONFIG=$(aws $PROFILE secretsmanager get-secret-value --secret-id "${SHORT_PROFILE}/infrastructure/index" --query "SecretString" --output text)
     ENDPOINT=$(jq -r '.endpoint' <<< $ES_CONFIG)
 
     CREDENTIALS=$(aws configure export-credentials --format process)
@@ -74,7 +51,6 @@ start-profile() {
 }
 
 stop-profile() {
-  SHORT_PROFILE=$(cut -d "-" -f 1 <<< $AWS_PROFILE)
   cid=$(instance $SHORT_PROFILE)
   if [[ -n "$cid" ]]; then
     docker stop $cid > /dev/null
@@ -85,18 +61,18 @@ stop-profile() {
 }
 
 if [[ -z $AWS_PROFILE ]]; then
-  type=dev
+  SHORT_PROFILE=dev-environment
 else
-  type=profile
+  SHORT_PROFILE=$(cut -d "-" -f 1 <<< $AWS_PROFILE)
 fi
 PORT=${PORT:-9200}
 AWS_REGION=${AWS_REGION:-us-east-1}
 
 case "$1" in
   start)
-    start-$type
+    start-profile $SHORT_PROFILE
     ;;
   stop)
-    stop-$type
+    stop-profile $SHORT_PROFILE
     ;;
 esac
