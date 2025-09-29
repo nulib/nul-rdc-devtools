@@ -4,8 +4,12 @@ fi
 
 if [[ -f $HOME/.asdf/asdf.sh ]]; then
   . $HOME/.asdf/asdf.sh
-else
+elif asdf > /dev/null 2>&1; then
   export PATH="$HOME/.asdf/shims:$PATH"
+fi
+
+if [[ -f ~/.local/bin/mise ]]; then
+  eval "$(~/.local/bin/mise activate $(basename $SHELL))"
 fi
 
 dir=$(dirname $0)
