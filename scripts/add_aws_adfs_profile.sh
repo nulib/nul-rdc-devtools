@@ -1,11 +1,13 @@
 #!/bin/bash
 
+. $(dirname $0)/imdsv2.sh
+
 profile=$1
 role_arn=$2
 
 if ! grep "\[profile $profile\]" ~/.aws/config; then
-  region=$(curl -s http://169.254.169.254/latest/dynamic/instance-identity/document | jq -r '.region')
-  instance_id=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
+  region=$(imdsv2 latest/dynamic/instance-identity/document | jq -r '.region')
+  instance_id=$(imdsv2 latest/meta-data/instance-id)
   net_id=$(aws ec2 describe-tags --filters Name=resource-id,Values=$instance_id --query "Tags[?Key=='NetID'].Value" --output text)
 
   cat >> ~/.aws/config <<__EOC__

@@ -4,16 +4,18 @@ if [[ -n $DEBUG ]]; then set -x; fi
 source $(dirname $0)/../scripts/with-aws-role.sh
 
 asdf-backup() {
-  echo "Saving list of asdf plugins and versions" >&2
-  installed="{}"
-  for p in $(asdf plugin list); do
-    installed=$(jq --arg plugin $p '. + { ($plugin): [] }' <<< $installed)
-    for v in $(asdf list $p); do
-      installed=$(jq --arg plugin $p --arg version $v '.[$plugin] |= . + [$version]' <<< $installed)
+  if asdf > /dev/null 2>&1; then
+    echo "Saving list of asdf plugins and versions" >&2
+    installed="{}"
+    for p in $(asdf plugin list); do
+      installed=$(jq --arg plugin $p '. + { ($plugin): [] }' <<< $installed)
+      for v in $(asdf list $p); do
+        installed=$(jq --arg plugin $p --arg version $v '.[$plugin] |= . + [$version]' <<< $installed)
+      done
     done
-  done
-  mkdir -p $HOME/.backup-ide/asdf
-  echo $installed > $HOME/.backup-ide/asdf/installed.json
+    mkdir -p $HOME/.backup-ide/asdf
+    echo $installed > $HOME/.backup-ide/asdf/installed.json
+  fi
 }
 
 asdf-restore() {
@@ -28,6 +30,23 @@ asdf-restore() {
       done
     done
     set -e
+  fi
+}
+
+mise-backup() {
+  if mise activate bash > /dev/null 2>&1; then
+    echo "Backing up mise installs" >&2
+    mkdir -p $HOME/.backup-ide/mise
+    mise ls -i --json > $HOME/.backup-ide/mise/installed.json
+  fi
+}
+
+mise-restore() {
+  if [[ -e $HOME/.backup-ide/mise/installed.json ]]; then
+    echo "Restoring mise installs" >&2
+    cat $HOME/.backup-ide/mise/installed.json \
+      | jq -r '. | to_entries | .[] | .key as $package | .value[] | [$package, .requested_version // .version] | join("@")' \
+      | xargs mise install
   fi
 }
 
@@ -121,14 +140,14 @@ should() {
 
 case $COMMAND in
   backup)
-    for component in asdf links package home; do
+    for component in mise asdf links package home; do
       if should backup $component; then
         ${component}-backup $@
       fi
     done
     ;;
   restore)
-    for component in home package links asdf; do
+    for component in home package links asdf mise; do
       if should restore $component; then
         ${component}-restore $@
       fi

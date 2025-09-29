@@ -3,6 +3,7 @@
 
 #!/bin/bash
 set -euo pipefail
+source $(dirname $0)/../scripts/imdsv2.sh
 SHUTDOWN_SCRIPT="$(dirname $0)/ec2-shutdown.sh"
 
 is_shutting_down() {
@@ -24,12 +25,12 @@ is_vscode_connected() {
 }
 
 instance_state() {
-    instance_id=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
+    instance_id=$(imdsv2 latest/meta-data/instance-id)
     /usr/local/bin/aws ec2 describe-instances --instance-ids $instance_id --query 'Reservations[*].Instances[*].State.Name' --output text --no-cli-pager
 }
 
 is_ssm_session_active() {
-    instance_id=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
+    instance_id=$(imdsv2 latest/meta-data/instance-id)
     session_count=$(/usr/local/bin/aws ssm describe-sessions --state Active --filter key=Target,value=$instance_id | jq '.Sessions | length')
     if [[ $session_count -gt 0 ]]; then
         return 0

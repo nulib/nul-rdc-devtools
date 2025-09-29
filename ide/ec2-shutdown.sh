@@ -2,6 +2,7 @@
 
 COMMAND=$1
 shift
+source $(dirname $0)/../scripts/imdsv2.sh
 
 CONFIG=$(cat $(dirname $0)/autoshutdown-configuration)
 SHUTDOWN_MINUTES=${CONFIG#*=}
@@ -9,7 +10,7 @@ if ! [[ $SHUTDOWN_MINUTES =~ ^[0-9]*$ ]]; then
     echo "shutdown timeout is invalid"
     exit 1
 fi
-INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
+INSTANCE_ID=$(imdsv2 /latest/meta-data/instance-id)
 SHUTDOWN_COMMAND="/usr/local/bin/aws ec2 stop-instances --instance-ids $INSTANCE_ID >>/var/log/ec2-shutdown.log 2>&1"
 
 find_shutdown_tasks() {

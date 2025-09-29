@@ -1,3 +1,4 @@
+. $(dirname $0)/imdsv2.sh
 . $(dirname $0)/instance-info.sh
 . $(dirname $0)/command-status.sh
 
@@ -36,7 +37,7 @@ cd $RETURN 2>&1
 stop_status
 
 export AWS_DEV_ENVIRONMENT=true
-export AWS_REGION=$(curl -s http://169.254.169.254/latest/dynamic/instance-identity/document | jq -r '.region')
+export AWS_REGION=$(imdsv2 latest/dynamic/instance-identity/document | jq -r '.region')
 export AWS_SDK_LOAD_CONFIG=1
 export DEV_ENV=dev
 export DEV_PREFIX=$INSTANCE_TAG_OWNER

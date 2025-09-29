@@ -15,7 +15,9 @@
 .ide/
 .ipython/
 .keep-alive/
-.local/
+.local/lib
+.local/share
+.local/state
 .mypy_cache/
 .next/
 .node-gyp/
