@@ -7,6 +7,10 @@ function aws_environment () {
 	cut -d "-" -f 1 <<< $AWS_PROFILE
 }
 
+function workspace () {
+	$TF workspace show
+}
+
 function tfwhich() {
 	echo $TF
 }
@@ -18,13 +22,16 @@ function tfselect () {
 }
 
 function tfconsole () {
-	$TF console -var-file $(aws_environment).tfvars
+	echo "==> $(basename $TF) console -var-file $(workspace).tfvars"
+	$TF console -var-file $(workspace).tfvars
 }
 
 function tfplan () {
-	$TF plan -var-file $(aws_environment).tfvars -out $(aws_environment).plan
+	echo "==> $(basename $TF) plan -var-file $(workspace).tfvars -out $(workspace).plan"
+	$TF plan -var-file $(workspace).tfvars -out $(workspace).plan
 }
 
 function tfapply () {
-	$TF apply $(aws_environment).plan
+	echo "==> $(basename $TF) apply $(workspace).plan"
+	$TF apply $(workspace).plan
 }

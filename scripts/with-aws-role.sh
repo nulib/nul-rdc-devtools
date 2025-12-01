@@ -1,4 +1,4 @@
-. $(dirname $0)/imdsv2.sh
+. $(dirname -- $BASH_SOURCE[0])/imdsv2.sh
 
 with-aws-role() {
   ROLE=$(imdsv2 latest/meta-data/iam/security-credentials/)

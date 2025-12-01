@@ -12,7 +12,7 @@ if [[ -f ~/.local/bin/mise ]]; then
   eval "$(~/.local/bin/mise activate $(basename $SHELL))"
 fi
 
-dir=$(dirname $0)
+dir=$(dirname -- $BASH_SOURCE[0])
 source $dir/environment.sh
 source $dir/asdf-helpers.sh
 source $dir/terraform-helpers.sh

@@ -2,9 +2,9 @@
 
 COMMAND=$1
 shift
-source $(dirname $0)/../scripts/imdsv2.sh
+source $(dirname -- $BASH_SOURCE[0])/../scripts/imdsv2.sh
 
-CONFIG=$(cat $(dirname $0)/autoshutdown-configuration)
+CONFIG=$(cat $(dirname -- $BASH_SOURCE[0])/autoshutdown-configuration)
 SHUTDOWN_MINUTES=${CONFIG#*=}
 if ! [[ $SHUTDOWN_MINUTES =~ ^[0-9]*$ ]]; then
     echo "shutdown timeout is invalid"

@@ -1,7 +1,7 @@
 #!/bin/bash -e
 if [[ -n $DEBUG ]]; then set -x; fi
 
-source $(dirname $0)/../scripts/with-aws-role.sh
+source $(dirname -- $BASH_SOURCE[0])/../scripts/with-aws-role.sh
 
 asdf-backup() {
   if asdf > /dev/null 2>&1; then
@@ -89,7 +89,7 @@ package-backup() {
 
 package-restore() {
   if [[ -e $HOME/.backup-ide/installed_packages.txt ]]; then
-    < $HOME/.backup-ide/installed_packages.txt xargs sudo dnf -y install
+    sudo dnf -y install $(< $HOME/.backup-ide/installed_packages.txt) 2>~/unrestored_packages.log
   fi
 }
 
