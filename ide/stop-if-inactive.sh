@@ -3,8 +3,8 @@
 
 #!/bin/bash
 set -euo pipefail
-source $(dirname -- $BASH_SOURCE[0])/../scripts/imdsv2.sh
-SHUTDOWN_SCRIPT="$(dirname -- $BASH_SOURCE[0])/ec2-shutdown.sh"
+source $DEVTOOLS_HOME/scripts/imdsv2.sh
+SHUTDOWN_SCRIPT="$DEVTOOLS_HOME/ide/ec2-shutdown.sh"
 
 is_shutting_down() {
     $SHUTDOWN_SCRIPT check

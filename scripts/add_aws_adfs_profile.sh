@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. $(dirname -- $BASH_SOURCE[0])/imdsv2.sh
+. $DEVTOOLS_HOME/scripts/imdsv2.sh
 
 profile=$1
 role_arn=$2

@@ -1,3 +1,5 @@
+export DEVTOOLS_HOME="$HOME/.nul-rdc-devtools"
+
 if [[ -e ~/.aws/credentials ]] && grep 'if this file is modified' ~/.aws/credentials >/dev/null; then
   echo -n "" > ~/.aws/credentials
 fi
@@ -12,12 +14,11 @@ if [[ -f ~/.local/bin/mise ]]; then
   eval "$(~/.local/bin/mise activate $(basename $SHELL))"
 fi
 
-dir=$(dirname -- $BASH_SOURCE[0])
-source $dir/environment.sh
-source $dir/asdf-helpers.sh
-source $dir/terraform-helpers.sh
-source $dir/with-aws-role.sh
+source $DEVTOOLS_HOME/scripts/environment.sh
+source $DEVTOOLS_HOME/scripts/asdf-helpers.sh
+source $DEVTOOLS_HOME/scripts/terraform-helpers.sh
+source $DEVTOOLS_HOME/scripts/with-aws-role.sh
 
-$dir/show-uptime.sh
+$DEVTOOLS_HOME/scripts/show-uptime.sh
 
 eval "$(direnv hook $(basename $SHELL))"

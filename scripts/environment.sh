@@ -1,6 +1,6 @@
-. $(dirname -- $BASH_SOURCE[0])/imdsv2.sh
-. $(dirname -- $BASH_SOURCE[0])/instance-info.sh
-. $(dirname -- $BASH_SOURCE[0])/command-status.sh
+. $DEVTOOLS_HOME/scripts/imdsv2.sh
+. $DEVTOOLS_HOME/scripts/instance-info.sh
+. $DEVTOOLS_HOME/scripts/command-status.sh
 
 # start_status "Retrieving secrets"
 # secrets=$(aws secretsmanager get-secret-value --secret-id dev-environment/config/meadow --query SecretString --output text)
@@ -8,7 +8,7 @@
 
 if [[ -n "$FORCE_UPDATE" || -z "$(find ~/.dev_cert/ -type f -mtime -1)" ]]; then
   start_status "Retrieving developer certificate"
-  $(dirname -- $BASH_SOURCE[0])/../bin/refresh-dev-cert
+  $DEVTOOLS_HOME/bin/refresh-dev-cert
   stop_status
 fi
 
