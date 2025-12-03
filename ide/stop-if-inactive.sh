@@ -3,6 +3,9 @@
 
 #!/bin/bash
 set -euo pipefail
+realfile=$(readlink -f $0)
+curdir=$(dirname $realfile)
+export DEVTOOLS_HOME=$(realpath $curdir/..)
 source $DEVTOOLS_HOME/scripts/imdsv2.sh
 SHUTDOWN_SCRIPT="$DEVTOOLS_HOME/ide/ec2-shutdown.sh"
 

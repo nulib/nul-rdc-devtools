@@ -3,10 +3,9 @@
 COMMAND=$1
 shift
 source $DEVTOOLS_HOME/scripts/imdsv2.sh
+source $DEVTOOLS_HOME/ide/autoshutdown-configuration
 
-CONFIG=$DEVTOOLS_HOME/ide/autoshutdown-configuration)
-SHUTDOWN_MINUTES=${CONFIG#*=}
-if ! [[ $SHUTDOWN_MINUTES =~ ^[0-9]*$ ]]; then
+if ! [[ $SHUTDOWN_TIMEOUT =~ ^[0-9]*$ ]]; then
     echo "shutdown timeout is invalid"
     exit 1
 fi
@@ -24,8 +23,8 @@ find_shutdown_tasks() {
 
 case $COMMAND in
     schedule)
-        echo "Scheduling shutdown in $SHUTDOWN_MINUTES minutes." >&2
-        at now + $SHUTDOWN_MINUTES minutes <<< "wall 'System is going down for poweroff NOW' && $SHUTDOWN_COMMAND" >/dev/null 2>&1
+        echo "Scheduling shutdown in $SHUTDOWN_TIMEOUT minutes." >&2
+        at now + $SHUTDOWN_TIMEOUT minutes <<< "wall 'System is going down for poweroff NOW' && $SHUTDOWN_COMMAND" >/dev/null 2>&1
         ;;
     cancel)
         echo "Canceling shutdown." >&2
