@@ -59,7 +59,7 @@ https-proxy <start|stop> HTTPS_PORT [HTTP_PORT]
 
 `https://` requests to port `HTTPS_PORT` will be proxied to `http://localhost:HTTP_PORT`
 
-#### `sg`
+#### `sgport`
 
 Manage security group inbound ports
 
@@ -67,13 +67,13 @@ Manage security group inbound ports
 Usage:
 
 Open ports/ranges to an address or range:
-  sg open <CIDR|all> PORT[-PORT] PORT[-PORT] ...
+  sgport open <CIDR|all> PORT[-PORT] PORT[-PORT] ...
 Close ports/ranges to an address or range:
-  sg close <CIDR|all> PORT[-PORT] PORT[-PORT] ...
+  sgport close <CIDR|all> PORT[-PORT] PORT[-PORT] ...
 Close all open ports:
-  sg close all
+  sgport close all
 Display all open ports:
-  sg show
+  sgport show
 ```
 
 ### Login

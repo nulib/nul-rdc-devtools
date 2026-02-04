@@ -5,13 +5,13 @@ instance() {
 }
 
 started() {
-  sg open all $PORT
+  sgport open all $PORT
   echo "Proxying http://${DEV_PREFIX}.dev.rdc.library.northwestern.edu:$PORT/ to $1 cluster in $AWS_REGION"
   echo "OpenSearch Dashboards available on http://${DEV_PREFIX}.dev.rdc.library.northwestern.edu:$PORT/_dashboards"
 }
 
 stopped() {
-  sg close all $PORT
+  sgport close all $PORT
   echo "Proxy to $1 cluster stopped"
 }
 

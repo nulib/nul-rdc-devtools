@@ -56,7 +56,7 @@ start() {
       -v /tmp/https-proxy-${PORT}.pem:/etc/ssl/certs/cert.pem:ro \
       -p ${PORT}:443 haproxy:2.4-alpine)
     if [[ $? == 0 ]]; then
-      sg open all $1
+      sgport open all $1
       echo "Proxying https://${DEV_PREFIX}.dev.rdc.library.northwestern.edu:$1/ to local port $2"
     else
       echo $output
@@ -72,7 +72,7 @@ stop() {
 
   cid=$(instance $1)
   if [[ -n "$cid" ]]; then
-    sg close all $1
+    sgport close all $1
     docker container stop $cid > /dev/null
     rm /tmp/https-proxy-$1.cfg /tmp/https-proxy-$1.pem
   else
