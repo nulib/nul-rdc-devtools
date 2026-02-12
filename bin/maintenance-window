@@ -1,5 +1,6 @@
 #!/bin/bash
 
+export DEVTOOLS_HOME="$HOME/.nul-rdc-devtools"
 touch /tmp/maintenance
 dnf update -y --security --bugfix
 sudo -Hiu ec2-user sh -c "cd /home/ec2-user/.nul-rdc-devtools && git pull origin && bin/backup-ide backup"

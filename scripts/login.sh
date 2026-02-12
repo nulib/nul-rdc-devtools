@@ -11,7 +11,9 @@ elif asdf > /dev/null 2>&1; then
 fi
 
 if [[ -f ~/.local/bin/mise ]]; then
-  eval "$(~/.local/bin/mise activate $(basename $SHELL))"
+  if ! typeset -f mise > /dev/null; then
+    eval "$(~/.local/bin/mise activate $(basename $SHELL))"
+  fi
 fi
 
 source $DEVTOOLS_HOME/scripts/environment.sh
