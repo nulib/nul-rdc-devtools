@@ -5,7 +5,7 @@ instance() {
 }
 
 started() {
-  sgport open all $PORT
+  sgport open $SESSION_IP $PORT
   echo "Proxying http://${DEV_PREFIX}.dev.rdc.library.northwestern.edu:$PORT/ to $1 cluster in $AWS_REGION"
   echo "OpenSearch Dashboards available on http://${DEV_PREFIX}.dev.rdc.library.northwestern.edu:$PORT/_dashboards"
 }
