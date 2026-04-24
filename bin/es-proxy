@@ -11,7 +11,7 @@ started() {
 }
 
 stopped() {
-  sgport close all $PORT
+  sgport close $SESSION_IP $PORT
   echo "Proxy to $1 cluster stopped"
 }
 

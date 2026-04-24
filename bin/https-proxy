@@ -72,7 +72,7 @@ stop() {
 
   cid=$(instance $1)
   if [[ -n "$cid" ]]; then
-    sgport close all $1
+    sgport close $SESSION_IP $1
     docker container stop $cid > /dev/null
     rm /tmp/https-proxy-$1.cfg /tmp/https-proxy-$1.pem
   else

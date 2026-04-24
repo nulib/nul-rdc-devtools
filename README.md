@@ -76,6 +76,8 @@ Display all open ports:
   sgport show
 ```
 
+**Note:** Use `$SESSION_IP` as the CIDR to open only to the IP address you're logged in from.
+
 ### Login
 
 There are a number of scripts that run on login (every time a shell is opened). These scripts:
