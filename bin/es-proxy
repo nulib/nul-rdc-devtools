@@ -11,7 +11,10 @@ started() {
 }
 
 stopped() {
-  sgport close $SESSION_IP $PORT
+  ips=$(sgport show | grep $PORT | awk {'print $2'})
+  for ip in $ips; do
+    sgport close $ip $PORT
+  done
   echo "Proxy to $1 cluster stopped"
 }
 

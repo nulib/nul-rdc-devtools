@@ -25,4 +25,9 @@ echo "Meadow Livebook running at $url"
 python -m webbrowser -t "$url"
 iex --sname meadow --cookie $MEADOW_COOKIE -S mix $@
 docker stop livebook_meadow > /dev/null
-sgport close $SESSION_IP 8080 8081 > /dev/null
+for PORT in 8080 8081; do
+  ips=$(sgport show | grep $PORT | awk {'print $2'})
+  for ip in $ips; do
+    sgport close $ip $PORT
+  done
+done
