@@ -45,7 +45,6 @@ export ERL_AFLAGS="-kernel shell_history enabled"
 #export NUSSO_BASE_URL=$(jq -r .nusso.base_url <<< $secrets)
 export SECRET_KEY_BASE=$(openssl rand -hex 32)
 export SECRETS_PATH=dev-environment
-export SESSION_IP=$(cat /var/run/ssh-client-ip)
 export SHARED_BUCKET=nul-shared-prod-staging
 export SSL_CERT=$HOME/.dev_cert/dev.rdc.cert.pem
 export SSL_KEY=$HOME/.dev_cert/dev.rdc.key.pem
