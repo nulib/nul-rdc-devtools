@@ -32,6 +32,14 @@ instance_state() {
     /usr/local/bin/aws ec2 describe-instances --instance-ids $instance_id --query 'Reservations[*].Instances[*].State.Name' --output text --no-cli-pager
 }
 
+is_tailscale_ssh_active() {
+    if ss -tnp | grep -E ':22.*100\.' >/dev/null; then
+        return 0
+    else
+        return 1
+    fi
+}
+
 is_ssm_session_active() {
     instance_id=$(imdsv2 latest/meta-data/instance-id)
     session_count=$(/usr/local/bin/aws ssm describe-sessions --state Active --filter key=Target,value=$instance_id | jq '.Sessions | length')
@@ -66,7 +74,7 @@ prevent_shutddown() {
     elif is_tmux_session_active; then
         echo "stop-if-inactive.sh: tmux session active" >&2
         return 0
-    elif is_vscode_connected && is_ssm_session_active; then
+    elif is_vscode_connected && (is_ssm_session_active || is_tailscale_ssh_active); then
         echo "stop-if-inactive.sh: VS Code is connected." >&2
         return 0
     else
@@ -81,7 +89,7 @@ elif is_shutting_down; then
     if prevent_shutddown; then
         echo -n "stop-if-inactive.sh: " >&2
         $SHUTDOWN_SCRIPT cancel
-        wall "System shutdown canceled."
+        sudo wall "System shutdown canceled."
     fi
 else
     if ! prevent_shutddown; then
