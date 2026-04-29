@@ -2,7 +2,7 @@
 
 export DEVTOOLS_HOME="$HOME/.nul-rdc-devtools"
 touch /tmp/maintenance
-dnf update -y --security --bugfix
-sudo -Hiu ec2-user sh -c "cd /home/ec2-user/.nul-rdc-devtools && git pull origin && bin/backup-ide backup"
+sudo dnf update -y --security --bugfix
+cd $DEVTOOLS_HOME && git pull origin && bin/backup-ide backup
 rm -f /tmp/maintenance
-/home/ec2-user/.ide/ec2-shutdown.sh schedule
+$HOME/.ide/ec2-shutdown.sh schedule
