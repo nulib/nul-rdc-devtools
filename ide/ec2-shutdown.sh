@@ -24,7 +24,7 @@ find_shutdown_tasks() {
 case $COMMAND in
     schedule)
         echo "Scheduling shutdown in $SHUTDOWN_TIMEOUT minutes." >&2
-        at now + $SHUTDOWN_TIMEOUT minutes <<< "wall 'System is going down for poweroff NOW' && $SHUTDOWN_COMMAND" >/dev/null 2>&1
+        at now + $SHUTDOWN_TIMEOUT minutes <<< "sudo wall 'System is going down for poweroff NOW' && $SHUTDOWN_COMMAND" >/dev/null 2>&1
         ;;
     cancel)
         echo "Canceling shutdown." >&2
@@ -42,7 +42,7 @@ case $COMMAND in
     notify)
         for task in $(find_shutdown_tasks); do
             shutdown_time=$(atq $task | awk '{ print $2,$3,$4,$5,$6 }')
-            wall "Shutdown scheduled for $shutdown_time UTC"
+            sudo wall "Shutdown scheduled for $shutdown_time UTC"
         done
         ;;
     *)

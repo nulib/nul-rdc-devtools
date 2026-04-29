@@ -49,7 +49,7 @@ modify_security_group() {
 get_open_ports() {
   aws ec2 describe-security-group-rules \
     --filters Name=group-id,Values=$(security_group_id) \
-    --query 'SecurityGroupRules[?!IsEgress].[ FromPort, ToPort, CidrIpv4 ]' \
+    --query 'SecurityGroupRules[?IpProtocol == `tcp`].[ FromPort, ToPort, CidrIpv4 ]' \
     --output text --no-cli-pager
 }
 

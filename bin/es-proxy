@@ -5,16 +5,16 @@ instance() {
 }
 
 started() {
-  sgport open $SESSION_IP $PORT
+#  sgport open $SESSION_IP $PORT
   echo "Proxying http://${DEV_PREFIX}.dev.rdc.library.northwestern.edu:$PORT/ to $1 cluster in $AWS_REGION"
   echo "OpenSearch Dashboards available on http://${DEV_PREFIX}.dev.rdc.library.northwestern.edu:$PORT/_dashboards"
 }
 
 stopped() {
-  ips=$(sgport show | grep $PORT | awk {'print $2'})
-  for ip in $ips; do
-    sgport close $ip $PORT
-  done
+#  ips=$(sgport show | grep $PORT | awk {'print $2'})
+#  for ip in $ips; do
+#    sgport close $ip $PORT
+#  done
   echo "Proxy to $1 cluster stopped"
 }
 
