@@ -1,0 +1,7 @@
+#!/bin/bash
+
+aws --profile staging sts get-caller-identity >/dev/null 2>&1 || aws --profile staging sso login >/dev/null 2>&1
+for e in staging production; do
+  echo "Updating $e developer IP allow-list"
+  aws --profile $e lambda invoke --function-name dev-environment-tailnet-ip-updater /dev/null >/dev/null 2>&1
+done
