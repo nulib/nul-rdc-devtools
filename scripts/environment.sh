@@ -1,5 +1,5 @@
 . $DEVTOOLS_HOME/scripts/imdsv2.sh
-if [[ -z "$CLAUDECODE" ]]; then
+if [[ $- == *i* ]]; then
   . $DEVTOOLS_HOME/scripts/instance-info.sh
 fi
 . $DEVTOOLS_HOME/scripts/command-status.sh
@@ -55,11 +55,6 @@ if ! grep .nul-rdc-devtools/bin <<< $PATH >/dev/null 2>&1; then
 fi
 export JWT_TOKEN_SECRET=$SECRET_KEY_BASE
 
-if [[ -z "$CLAUDECODE" ]]; then
-  start_status "Configuring backup"
-  BACKUP_CONFIG=$(aws secretsmanager get-secret-value --secret-id "dev-environment/terraform/common" --query "SecretString" --output text)
-  BACKUP_BUCKET=$(jq -r .shared_bucket_arn <<< $BACKUP_CONFIG | rev | cut -d ':' -f1 | rev)
-  echo -e "${green}✓${white}\n"
-  export RESTIC_REPOSITORY="s3:s3.amazonaws.com/$BACKUP_BUCKET/ide-backups/$DEV_PREFIX"
-  export RESTIC_PASSWORD=$(jq -r .backup_key <<< $BACKUP_CONFIG)
+if [[ $- == *i* ]]; then
+  . $DEVTOOLS_HOME/scripts/configure-backup.sh
 fi

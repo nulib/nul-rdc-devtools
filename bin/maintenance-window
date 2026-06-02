@@ -1,6 +1,7 @@
 #!/bin/bash
 
 export DEVTOOLS_HOME="$HOME/.nul-rdc-devtools"
+. $DEVTOOLS_HOME/scripts/configure-backup.sh
 touch /tmp/maintenance
 sudo dnf update -y --security --bugfix
 cd $DEVTOOLS_HOME && git pull origin && bin/backup-ide backup

@@ -17,7 +17,7 @@ if [[ -f ~/.local/bin/mise ]]; then
 fi
 
 source $DEVTOOLS_HOME/scripts/environment.sh
-if [[ -z "$CLAUDECODE" ]]; then
+if [[ $- == *i* ]] ; then
   source $DEVTOOLS_HOME/scripts/asdf-helpers.sh
   source $DEVTOOLS_HOME/scripts/terraform-helpers.sh
   source $DEVTOOLS_HOME/scripts/with-aws-role.sh
