@@ -1,4 +1,5 @@
 TF=$(which terraform)
+$TF version
 # if which tofu &> /dev/null; then
 # 	TF=$(which tofu)
 # fi
@@ -34,4 +35,8 @@ function tfplan () {
 function tfapply () {
 	echo "==> $(basename $TF) apply $(workspace).plan"
 	$TF apply $(workspace).plan
+}
+
+function tfversion() {
+	$TF version
 }

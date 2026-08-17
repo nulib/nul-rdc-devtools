@@ -1,7 +1,5 @@
 . $DEVTOOLS_HOME/scripts/imdsv2.sh
-if [[ $- == *i* ]]; then
-  . $DEVTOOLS_HOME/scripts/instance-info.sh
-fi
+. $DEVTOOLS_HOME/scripts/instance-info.sh
 . $DEVTOOLS_HOME/scripts/command-status.sh
 # start_status "Retrieving secrets"
 # secrets=$(aws secretsmanager get-secret-value --secret-id dev-environment/config/meadow --query SecretString --output text)
@@ -55,6 +53,4 @@ if ! grep .nul-rdc-devtools/bin <<< $PATH >/dev/null 2>&1; then
 fi
 export JWT_TOKEN_SECRET=$SECRET_KEY_BASE
 
-if [[ $- == *i* ]]; then
-  . $DEVTOOLS_HOME/scripts/configure-backup.sh
-fi
+. $DEVTOOLS_HOME/scripts/configure-backup.sh

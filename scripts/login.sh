@@ -17,10 +17,10 @@ if [[ -f ~/.local/bin/mise ]]; then
 fi
 
 source $DEVTOOLS_HOME/scripts/environment.sh
+source $DEVTOOLS_HOME/scripts/with-aws-role.sh
 if [[ $- == *i* ]] ; then
   source $DEVTOOLS_HOME/scripts/asdf-helpers.sh
   source $DEVTOOLS_HOME/scripts/terraform-helpers.sh
-  source $DEVTOOLS_HOME/scripts/with-aws-role.sh
 
   $DEVTOOLS_HOME/scripts/show-uptime.sh
 fi
