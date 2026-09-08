@@ -1,4 +1,8 @@
 #!/bin/bash
+set -euo pipefail
+realfile=$(readlink -f $0)
+curdir=$(dirname $realfile)
+export DEVTOOLS_HOME=$(realpath $curdir/..)
 
 ok=14400
 warn=28800
@@ -64,7 +68,7 @@ if (pgrep -u ec2-user -f ".(antigravity|cursor|vscod(e|ium))-server(-insiders)?/
 if (pgrep -u ec2-user -f "tmux" > /dev/null); then procs+=("tmux"); fi
 if [[ -f /tmp/maintenance ]]; then procs+=("system maintenance"); fi
 if [[ -f /home/ec2-user/.keep-alive ]]; then procs+=("~/.keep-alive"); fi
-if [[ -z $procs ]]; then procs=("none"); fi
+if (( ${#procs[@]} == 0 )); then procs=("none"); fi
 
 printf -v display_procs '%s, ' "${procs[@]}"
 echo -e "Conditions preventing shutdown: ${COLOR}${display_procs%, }${NOCOLOR}"
